@@ -6,23 +6,18 @@ Serve `dist` over HTTP. Native modules do not load from a `file://` URL. Three.j
 
 ## Athlete
 
-`dist/assets/athlete.glb` is an original sculpted model with a continuous body surface, red shirt, black shorts, white trainers, short neck, brown hair and articulated fingers. It contains 48 bones and 18 baked exercise clips. Body and clothing colors share the same continuous surface; this is fitted clothing rather than simulated fabric. Smaller features are batched into skinned material groups.
+The athlete is "Charter T-Pose" by Tim0, from Sketchfab (https://sketchfab.com/3d-models/558a75ed32274e0d868ac22468565453), licensed CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). It was refitted to FORM's own skeleton: the mesh was re-posed onto the rig's rest joints, re-weighted to FORM bone names from the model's original skin weights, and given a Muscles-highlight region on the shirt's chest panel. Textures ship as JPEGs beside `dist/assets/athlete.glb` and are applied by `athlete.js`.
 
-The body uses fixed .44/.44 arm lengths, .54/.56 leg lengths and a .8 torso length in scene units. Those units are not meters. AnimationMixer controls deterministic clip playback; runtime IK resolves exact grip and support targets after interpolation. Exercises retain stable IDs. All 16 movements in the labeled reference remain, followed by floor press, pullover, incline push-up and squeeze press.
+The skeleton keeps 48 bones and 18 baked exercise clips. Arms keep fixed .44/.44 segments and the torso .8 (scene units, not meters). Legs (.687 thigh, .595 shin) and hip width (.124) are measured from the model and exported from `motion.js`. Finger joints and hand bind rotations are measured from the model (`FINGERS`, `HAND_BIND` in `rig.js`). Equipment is seated at a grip point inside the curled fingers (`GRIP` in `scene.js`), not at the IK wrist target.
 
-The rig is custom-authored programmatically rather than imported from Blender or a purchased character. Its clips are baked from the site's exercise targets, with a controlled lowering/return curve. They are illustrative animations, not independently certified biomechanics or motion capture. No claim of clinical accuracy or measured muscle activation is made.
+AnimationMixer controls deterministic clip playback; runtime IK resolves exact grip and support targets after interpolation. Clips are illustrative animations, not certified biomechanics or motion capture.
 
 ## Regenerate the asset
 
-Requires Node 22+ (the repository test loader uses `registerHooks`) and Python with numpy, scipy and scikit-image:
-
-```sh
-python scripts/sculpt-athlete.py /tmp/form-athlete-surface.json
-node scripts/build-athlete.mjs /tmp/form-athlete-surface.json
-node --test tests/*.test.mjs
-```
-
-The scripts provide the editable authoring source; the GLB is the runtime delivery asset. No texture downloads are required. To change proportions, keep the sculpt, rig rest offsets and motion constraints consistent, then regenerate and verify.
+1. In Blender, import the Sketchfab model into its own scene.
+2. Run `scripts/export-charter-blender.py` in Blender with `OUT` (JSON path) and `TEX` (`dist/assets`) set; see the script header.
+3. `node scripts/build-athlete.mjs <OUT>` (Node 22.15+).
+4. `node --test tests/*.test.mjs`
 
 ## Code organization
 

@@ -1,7 +1,21 @@
 import * as THREE from 'three';
 import {GLTFLoader} from './vendor/loaders/GLTFLoader.js';
 import {applyRigPose,durationFor} from './rig.js';
-export const loadAthlete=()=>new GLTFLoader().loadAsync(new URL('./assets/athlete.glb',import.meta.url).href);
+const asset=name=>new URL('./assets/'+name,import.meta.url).href;
+// PBR maps for the body and outfit atlases (see scripts/export-charter-blender.py).
+async function textures(){
+ const loader=new THREE.TextureLoader(),maps={};
+ await Promise.all(['body','outfit'].flatMap(part=>['baseColor','normal','metallicRoughness'].map(async kind=>{
+  const t=await loader.loadAsync(asset(`athlete-${part}-${kind}.jpg`));t.flipY=false;t.anisotropy=4;if(kind==='baseColor')t.colorSpace=THREE.SRGBColorSpace;(maps[part]??={})[kind]=t;
+ })));
+ return maps;
+}
+export async function loadAthlete(){
+ const [gltf,maps]=await Promise.all([new GLTFLoader().loadAsync(asset('athlete.glb')),textures()]);
+ gltf.scene.traverse(o=>{if(!o.isMesh)return;for(const m of [o.material].flat()){const t=maps[m.name==='Body'?'body':'outfit'];
+  Object.assign(m,{map:t.baseColor,normalMap:t.normal,roughnessMap:t.metallicRoughness,metalnessMap:t.metallicRoughness,roughness:1,metalness:1});m.needsUpdate=true;}});
+ return gltf;
+}
 export class Athlete {
  constructor(gltf){
   this.group=gltf.scene;this.map={};this.group.traverse(o=>{if(o.isBone)this.map[o.name]=o;if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(o.isSkinnedMesh)o.frustumCulled=false;}});

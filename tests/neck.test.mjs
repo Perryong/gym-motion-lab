@@ -13,13 +13,15 @@ test('short neck and the real skinned neck surface stay connected through every 
  const athlete=new Athlete(gltf),mesh=athlete.mesh,position=mesh.geometry.attributes.position;
  const neckVertices=[];for(let i=0;i<position.count;i++)if(position.getY(i)>.82&&position.getY(i)<.97&&Math.abs(position.getX(i))<.1)neckVertices.push(i);
  assert.ok(neckVertices.length>30);
+ const restDistance=(()=>{athlete.group.updateMatrixWorld(true);const c=athlete.map.ShoulderLine.getWorldPosition(new THREE.Vector3()),h=athlete.map.Head.getWorldPosition(new THREE.Vector3()),l=new THREE.Line3(c,h);
+  return new Map(neckVertices.map(i=>{const v=mesh.getVertexPosition(i,new THREE.Vector3()).applyMatrix4(mesh.matrixWorld);return [i,v.distanceTo(l.closestPointToPoint(v,true,new THREE.Vector3()))];}));})();
  for(const id of displayOrder)for(let f=0;f<=40;f++){
   athlete.update(id,f/40);const center=athlete.map.ShoulderLine.getWorldPosition(new THREE.Vector3()),head=athlete.map.Head.getWorldPosition(new THREE.Vector3());
   assert.ok(Math.abs(center.distanceTo(head)-.17)<1e-6,'fixed short head connection');
   const line=new THREE.Line3(center,head);
   for(const i of neckVertices){
    const vertex=mesh.getVertexPosition(i,new THREE.Vector3()).applyMatrix4(mesh.matrixWorld),nearest=line.closestPointToPoint(vertex,true,new THREE.Vector3());
-   assert.ok(vertex.distanceTo(nearest)<.16,`neck surface disconnected ${id} ${f}`);
+   assert.ok(Math.abs(vertex.distanceTo(nearest)-restDistance.get(i))<.01,`neck surface disconnected ${id} ${f}`);
   }
  }
 });

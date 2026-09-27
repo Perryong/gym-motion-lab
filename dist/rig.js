@@ -1,6 +1,13 @@
 import * as THREE from 'three';
 import {displayOrder} from './exercises.js';
-import {poseAt,solveArm} from './motion.js';
+import {poseAt,solveArm,THIGH,SHIN,HIP} from './motion.js';
+// Hand-local joint positions (fingers along +Y, palm toward +Z) and hand bind
+// rotations measured from the athlete model by scripts/export-charter-blender.py.
+export const FINGERS={R_Index:[[-.0331,.1573,.0051],[-.03,.2027,.0136],[-.027,.2446,.0243]],R_Middle:[[0,.1556,0],[.0041,.2041,.0067],[.0083,.2529,.0144]],R_Ring:[[.032,.1538,.0004],[.0382,.1986,.0067],[.0441,.2415,.0127]],R_Pinky:[[.0644,.1345,.0051],[.0694,.1811,.0099],[.0736,.2201,.0147]],R_Thumb:[[-.0648,.0956,.0472],[-.0844,.1368,.0687]],L_Index:[[.0323,.1586,.0032],[.0292,.2041,.0086],[.0263,.2467,.014]],L_Middle:[[0,.1572,-0],[-.005,.2084,-.0007],[-.0101,.2561,.0031]],L_Ring:[[-.0344,.1557,.0005],[-.0373,.1999,-.0015],[-.0406,.2442,.0002]],L_Pinky:[[-.0618,.1359,.0032],[-.0698,.1833,.0037],[-.0762,.222,.003]],L_Thumb:[[.0603,.0977,.0531],[.079,.1439,.072]]};
+// Per-finger curl wrapping a handle centred at scene.js GRIP (fitted so every
+// middle and end knuckle clears the barrel without floating off it).
+const GRIP_CURL={Index:[.4,.75,.83],Middle:[.55,.75,.83],Ring:[.55,.55,.6],Pinky:[.3,.4,.44]};
+export const HAND_BIND={R:[.4817,.4567,-.5257,.532],L:[.4966,-.4153,.561,.5159]};
 const V=a=>new THREE.Vector3(...a),Y=new THREE.Vector3(0,1,0);
 export const durationFor=id=>id===12?4.8:[3,5,8,11,13,16].includes(id)?5.6:5;
 export function makeSkeleton(){
@@ -10,11 +17,11 @@ export function makeSkeleton(){
  for(const s of [-1,1]){const n=s<0?'L':'R';
   bone(n+'_UpperArm','ShoulderLine',[s*.35,0,0]);bone(n+'_Forearm',n+'_UpperArm',[s*.44,0,0]);bone(n+'_Hand',n+'_Forearm',[s*.44,0,0]);
   bone(n+'_GripPalm',n+'_Hand',[0,0,0]);
-  bone(n+'_Thigh','Hips',[s*.17,0,0]);bone(n+'_Shin',n+'_Thigh',[0,-.54,0]);bone(n+'_Foot',n+'_Shin',[0,-.56,0]);
-  for(const [i,f] of ['Index','Middle','Ring','Pinky'].entries()){
-   bone(n+'_'+f+'1',n+'_GripPalm',[(i-1.5)*.026,.017,-.049]);bone(n+'_'+f+'2',n+'_'+f+'1',[0,.043,0]);bone(n+'_'+f+'3',n+'_'+f+'2',[0,.031,0]);
+  bone(n+'_Thigh','Hips',[s*HIP,0,0]);bone(n+'_Shin',n+'_Thigh',[0,-THIGH,0]);bone(n+'_Foot',n+'_Shin',[0,-SHIN,0]);
+  for(const f of ['Index','Middle','Ring','Pinky','Thumb']){
+   const joints=FINGERS[n+'_'+f];let parent=n+'_GripPalm';
+   joints.forEach((p,j)=>{const name=n+'_'+f+(j+1);bone(name,parent,j?p.map((v,k)=>v-joints[j-1][k]):p);parent=name;});
   }
-  bone(n+'_Thumb1',n+'_GripPalm',[s*.064,-.025,-.033]);bone(n+'_Thumb2',n+'_Thumb1',[0,.036,0]);
  }
  return {bones,map};
 }
@@ -29,12 +36,6 @@ export function applyRigPose(group,map,id,phase){
  group.updateMatrixWorld(true);
  for(const s of [-1,1]){const n=s<0?'L':'R',side=p.prone?-s:s,i=side<0?0:1;
   const relaxed=id===11&&s===-1,cableGrip=(id===11&&s===1)||id===16;
-  // Seat the cable grip beyond the wrist, inside the palm and curled fingers.
-  map[n+'_GripPalm'].position.set(0,cableGrip?.075:0,0);
-  // Cable palms face inward. Put the thumb and index finger on the upper
-  // edge of each mirrored hand, rather than rolling an outward-facing palm.
-  map[n+'_Thumb1'].position.x=(cableGrip?-s:s)*.064;
-  for(const [i,f] of ['Index','Middle','Ring','Pinky'].entries())map[n+'_'+f+'1'].position.x=(cableGrip?s:1)*(i-1.5)*.026;
   const {shoulder,hand,pole}=p.arms(side),elbow=solveArm(shoulder,hand,pole);
   // A shared elbow hinge frame fixes roll as well as direction. Independent
   // shortest-arc rotations can twist adjacent bones in opposite directions.
@@ -45,7 +46,7 @@ export function applyRigPose(group,map,id,phase){
    orient(map[name],new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(x,y,z)),space);
   }
   const lateral=new THREE.Vector3(1,0,0).applyQuaternion(map.Hips.quaternion);
-  for(const [name,a,b] of [[n+'_Thigh',[side*.17,...p.hip.slice(1)],p.knees[i]],[n+'_Shin',p.knees[i],p.ankles[i]]]){
+  for(const [name,a,b] of [[n+'_Thigh',[side*HIP,...p.hip.slice(1)],p.knees[i]],[n+'_Shin',p.knees[i],p.ankles[i]]]){
    const y=V(a).sub(V(b)).normalize(),x=lateral.clone().addScaledVector(y,-lateral.dot(y)).normalize(),z=x.clone().cross(y).normalize();
    orient(map[name],new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(x,y,z)),space);
   }
@@ -56,8 +57,10 @@ export function applyRigPose(group,map,id,phase){
   let x=V([1,0,0]),y=V(hand).sub(V(elbow)).normalize();
   if([7,8,13].includes(id))x=V([0,1,0]);
   if([3,11,16,18].includes(id))x=V([0,1,0]);
-  if(id===14||id===19)x=V([0,0,1]);
-  if(p.prone&&id!==19){y=V([0,0,-1]);x=V([1,0,0]);}
+  // Neutral grips (dips, rings): palms face the midline on both sides.
+  if(id===14||id===19)x=V([0,0,-Math.sign(hand[0])]);
+  // Push-ups: fingers toward the head (-Z), palms flat on the support (-Y).
+  if(p.prone&&id!==19){y=V([0,0,-1]);x=V([-1,0,0]);}
   if(relaxed){
    x=V([0,0,1]).addScaledVector(y,-y.z).normalize();
   }else if(cableGrip){
@@ -68,12 +71,10 @@ export function applyRigPose(group,map,id,phase){
   const qHand=new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(x,y,z));
   orient(map[n+'_Hand'],qHand,space);
   const open=(p.prone&&id!==19)||(id===12&&phase%1>=.22&&phase%1<.83),plate=id===10;
-  const curl=open?.06:plate?.3:1.13;
-  for(const f of ['Index','Middle','Ring','Pinky'])for(let j=1;j<=3;j++)map[n+'_'+f+j].rotation.set(curl*(j===1?.75:1),0,0);
+  for(const f of ['Index','Middle','Ring','Pinky'])for(let j=1;j<=3;j++)map[n+'_'+f+j].rotation.set(open?.06:plate?.3:GRIP_CURL[f][j-1],0,0);
   map[n+'_Thumb1'].rotation.set(open?.15:.85,0,s*-.65);map[n+'_Thumb2'].rotation.set(open?.1:1.0,0,0);
   if(cableGrip){
-   // Match the C-shaped fingers to the handle barrel, then oppose the thumb.
-   for(const f of ['Index','Middle','Ring','Pinky'])for(let j=1;j<=3;j++)map[n+'_'+f+j].rotation.set([.85,.75,1.05][j-1],0,0);
+   // Fingers already wrap the barrel (GRIP_CURL); oppose the thumb.
    map[n+'_Thumb1'].rotation.set(.8,0,-s*.9);map[n+'_Thumb2'].rotation.set(.9,0,0);
   }else if(relaxed){
    for(const f of ['Index','Middle','Ring','Pinky'])for(let j=1;j<=3;j++)map[n+'_'+f+j].rotation.set([.15,.30,.22][j-1],0,0);
@@ -90,7 +91,7 @@ export function createExerciseClips(group,map){
    for(const b of Object.values(map)){samples.get(b.name).position.push(...b.position.toArray());samples.get(b.name).quaternion.push(...b.quaternion.toArray());}
   }
   for(const b of Object.values(map)){
-   const values=samples.get(b.name);if(b.name==='Hips'||b.name.endsWith('_GripPalm')||/_(Thumb|Index|Middle|Ring|Pinky)1$/.test(b.name))tracks.push(new THREE.VectorKeyframeTrack(b.name+'.position',times,values.position));
+   const values=samples.get(b.name);if(b.name==='Hips')tracks.push(new THREE.VectorKeyframeTrack(b.name+'.position',times,values.position));
    tracks.push(new THREE.QuaternionKeyframeTrack(b.name+'.quaternion',times,values.quaternion));
   }
   return new THREE.AnimationClip('Exercise_'+id,duration,tracks);

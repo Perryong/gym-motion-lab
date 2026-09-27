@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {registerHooks} from 'node:module';
 registerHooks({resolve(specifier,context,next){return specifier==='three'?{url:new URL('../dist/vendor/three.module.js',import.meta.url).href,shortCircuit:true}:next(specifier,context);}});
 const THREE=await import('../dist/vendor/three.module.js');
-const {Studio}=await import('../dist/scene.js');
+const {Studio,GRIP}=await import('../dist/scene.js');
 const {exercises,displayOrder}=await import('../dist/exercises.js');
 const {poseAt}=await import('../dist/motion.js');
 const {readFile}=await import('node:fs/promises');
@@ -34,9 +34,10 @@ test('all 18 real scenes build and animate with finite geometry and attached equ
     const ankle=s.root.localToWorld(new THREE.Vector3(...p.ankles[side<0?0:1]));
     assert.ok(s.athlete.map[name+'_Foot'].getWorldPosition(new THREE.Vector3()).distanceTo(ankle)<1e-6,`rig ankle contact ${id} ${phase}`);
    }
-   for(const c of s.cables){const bone=s.athlete.map[(c.side<0?'L':'R')+'_GripPalm'],hand=bone.localToWorld(new THREE.Vector3(0,.013,-.006));assert.ok(hand.distanceTo(c.grip.position)<1e-8);}
-   for(const c of s.machineArms){const hand=s.root.localToWorld(new THREE.Vector3(...p.arms(c.side).hand));assert.ok(hand.distanceTo(c.grip.position)<1e-8);}
-   for(let i=0;i<2;i++)if(s.weights[i].visible&&id!==5)assert.ok(s.weights[i].position.distanceTo(new THREE.Vector3(...p.arms(i===0?-1:1).hand))<1e-8);
+   const palm=side=>s.athlete.map[(side<0?'L':'R')+'_Hand'].localToWorld(new THREE.Vector3(...GRIP));
+   for(const c of s.cables)assert.ok(palm(c.side).distanceTo(c.grip.position)<1e-8,'cable handle in palm');
+   for(const c of s.machineArms)assert.ok(palm(c.side).distanceTo(c.grip.position)<1e-8,'machine grip in palm');
+   for(let i=0;i<2;i++)if(s.weights[i].visible&&id!==5)assert.ok(s.root.localToWorld(s.weights[i].position.clone()).distanceTo(palm(i===0?-1:1))<1e-8,'dumbbell in palm');
   }
   assert.equal(s.cables.length,id===11?1:id===16?2:0);
   assert.equal(s.rings.length,id===19?2:0);

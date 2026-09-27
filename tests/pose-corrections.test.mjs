@@ -88,7 +88,7 @@ test('cable handle is held beyond the wrist and its strap turns toward cable ten
   s.setExercise(id);s.update(phase);s.scene.updateMatrixWorld(true);
   for(const c of s.cables){
    const wrist=s.athlete.map[(c.side<0?'L':'R')+'_Hand'],local=wrist.worldToLocal(c.grip.position.clone());
-   assert.ok(local.y>.075&&local.y<.11,'grip belongs inside palm beyond wrist');
+   assert.ok(local.y>.15&&local.y<.23,'grip belongs inside the finger curl beyond the knuckles');
    const end=c.line.localToWorld(new THREE.Vector3(0,.5,0)),axis=new THREE.Vector3(0,1,0).applyQuaternion(c.grip.quaternion);
    const pull=new THREE.Vector3(...c.anchor).sub(c.grip.position);pull.addScaledVector(axis,-pull.dot(axis)).normalize();
    assert.ok(end.clone().sub(c.grip.position).normalize().dot(pull)>.999,'strap follows projected cable direction');
@@ -145,6 +145,19 @@ test('forearm cross sections retain volume under gripping and push-up wrist rota
     const posed=mesh.getVertexPosition(a,new THREE.Vector3()).distanceTo(mesh.getVertexPosition(b,new THREE.Vector3()));
     assert.ok(posed/rest>.92,`collapsed forearm ${id} ${phase}`);
    }
+  }
+ }
+});
+test('push-up palms press flat on the support and neutral grips face the midline',async()=>{
+ const s=await scene();
+ for(const id of [6,9,15,14,19])for(const phase of [0,.3,.56]){
+  s.setExercise(id);s.update(phase);s.scene.updateMatrixWorld(true);
+  for(const n of ['L','R']){
+   const hand=s.athlete.map[n+'_Hand'],q=hand.getWorldQuaternion(new THREE.Quaternion()),at=hand.getWorldPosition(new THREE.Vector3());
+   const palm=new THREE.Vector3(0,0,1).applyQuaternion(q),thumb=s.athlete.map[n+'_Thumb1'].getWorldPosition(new THREE.Vector3()).sub(at);
+   if([6,9,15].includes(id))assert.ok(palm.y<-.9,`palm must face the floor ${id} ${n}: ${palm.y}`);
+   else assert.ok(palm.x*Math.sign(at.x)<-.5,`palm must face the midline ${id} ${n}`);
+   assert.ok(thumb.x*Math.sign(at.x)<0,`thumb must sit on the midline side ${id} ${n}`);
   }
  }
 });

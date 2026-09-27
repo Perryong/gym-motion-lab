@@ -3,6 +3,9 @@ import {OrbitControls} from './vendor/OrbitControls.js';
 import {poseAt} from './motion.js';
 import {Athlete} from './athlete.js';
 const v=a=>new THREE.Vector3(...a),Y=new THREE.Vector3(0,1,0);
+// Handle centre inside the curled fingers, in hand-bone space (fingers +Y,
+// palm +Z); fitted to the athlete's finger joints at gripping curl.
+export const GRIP=[0,.174,.056];
 export class Studio {
  constructor(host,asset){
   this.host=host;this.id=0;this.phase=0;this.highlight=false;
@@ -62,7 +65,7 @@ export class Studio {
    this.rod(e,[0,.43,-.72],[0,.43,.30],.05,m.metal);
    if([4,17].includes(id)){for(const side of [-1,1]){const height=id===17?1.90:1.60;this.rod(e,[side*1.0,.08,-.88],[side*1.0,height+.08,-.88],.045,m.metal);this.rod(e,[side*1.0,.09,-1.15],[side*1.0,.09,.5],.055,m.metal);this.rod(e,[side*1.,height,-.88],[side*1.,height,-.66],.035,m.metal);}}
   }else if([11,16].includes(id)){
-   const pulleyHeight=id===16?1.70:2.01;
+   const pulleyHeight=id===16?1.98:2.28;
    for(const side of (id===11?[1]:[-1,1])){
     this.rod(e,[side*1.45,.08,-.40],[side*1.45,2.65,-.40],.055,m.metal);this.rod(e,[side*1.45,.08,-.75],[side*1.45,.08,.4],.06,m.metal);
     this.box(e,[side*1.45,.85,-.50],[.30,1.40,.20],m.dark);
@@ -77,8 +80,8 @@ export class Studio {
   }else if(id===19){
    for(const side of [-1,1]){
     this.rod(e,[side*1.0,.05,-.55],[side*1.,2.80,-.55],.045,m.metal);this.rod(e,[side*1.,.05,-.85],[side*1.,.05,.2],.06,m.metal);
-    this.rod(e,[side*.44,.57,-.035],[side*.44,2.8,-.035],.017,m.shorts);
-    const ring=this.mesh(new THREE.TorusGeometry(.12,.022,12,40),m.metal,e);ring.rotation.y=Math.PI/2;ring.position.set(side*.44,.45,-.035);this.rings.push(ring);
+    const strap=this.rod(e,[0,0,0],[0,1,0],.017,m.shorts);
+    const ring=this.mesh(new THREE.TorusGeometry(.12,.022,12,40),m.metal,e);ring.rotation.y=Math.PI/2;this.rings.push({ring,strap,side});
    }
    this.rod(e,[-1.0,2.80,-.035],[1.0,2.80,-.035],.045,m.metal);
   }
@@ -87,37 +90,39 @@ export class Studio {
   this.update(0);this.view('perspective');
  }
  update(phase){this.phase=phase;const p=poseAt(this.id,phase);this.root.position.set(...p.root);this.root.rotation.set(p.rotation,0,0);
-  this.athlete.update(this.id,phase);
-  const a=p.arms(-1);
-  this.weights.forEach((w,i)=>{const hand=p.arms(i===0?-1:1).hand;w.position.set(...hand);w.rotation.set(0,0,[7,8,13].includes(this.id)?Math.PI/2:0);
-   if(this.id===5){w.position.set(0,hand[1],hand[2]);w.rotation.z=Math.PI/2;}
+  this.athlete.update(this.id,phase);this.root.updateMatrixWorld(true);
+  // Equipment sits in the actual palm of each hand, in root space.
+  const bone=s=>this.athlete.map[(s<0?'L':'R')+'_Hand'],palm=s=>this.root.worldToLocal(bone(s).localToWorld(v(GRIP)));
+  const both=palm(-1).add(palm(1)).multiplyScalar(.5),rootQ=this.root.getWorldQuaternion(new THREE.Quaternion()).invert();
+  this.weights.forEach((w,i)=>{const s=i===0?-1:1;w.position.copy(palm(s));w.quaternion.copy(rootQ).multiply(bone(s).getWorldQuaternion(new THREE.Quaternion()));
+   if(this.id===5){w.position.copy(both);w.rotation.set(0,0,Math.PI/2);}
   });
-  if([4,17].includes(this.id)){this.bar.position.set(0,a.hand[1],a.hand[2]);}
+  if([4,17].includes(this.id)){this.bar.position.set(0,both.y,both.z);}
   this.root.updateMatrixWorld(true);
-  for(const {arm,grip,side} of this.machineArms??[]){const hand=this.root.localToWorld(v(p.arms(side).hand));this.link(arm,[side*.86,2.3,-.30],hand.toArray());grip.position.copy(hand);}
+  for(const {arm,grip,side} of this.machineArms??[]){const hand=this.root.localToWorld(palm(side));this.link(arm,[side*.86,1.74,-.30],hand.toArray());grip.position.copy(hand);}
+  // Each ring hangs from its strap with the fist closed around the lower rim.
+  for(const {ring,strap,side} of this.rings??[]){const hand=this.root.localToWorld(palm(side));ring.position.copy(hand).y+=.12;this.link(strap,[ring.position.x,ring.position.y+.12,ring.position.z],[Math.sign(ring.position.x)*.44,2.8,-.035]);}
   for(const {line,grip,straps,side,anchor} of this.cables??[]){
-   const bone=this.athlete.map[(side<0?'L':'R')+'_Hand'];
-   const palm=this.athlete.map[(side<0?'L':'R')+'_GripPalm'];
-   const point=a=>palm.localToWorld(v(a));
-   grip.position.copy(point([0,.013,-.006]));
-   grip.quaternion.copy(bone.getWorldQuaternion(new THREE.Quaternion())).multiply(new THREE.Quaternion().setFromAxisAngle(v([0,0,1]),-Math.PI/2));
+   const point=a=>bone(side).localToWorld(v(a).add(v(GRIP)));
+   grip.position.copy(point([0,0,0]));
+   grip.quaternion.copy(bone(side).getWorldQuaternion(new THREE.Quaternion())).multiply(new THREE.Quaternion().setFromAxisAngle(v([0,0,1]),-Math.PI/2));
    // The strap swivels around the barrel toward cable tension.
    const barrelAxis=v([0,1,0]).applyQuaternion(grip.quaternion),pull=v(anchor).sub(grip.position);
    pull.addScaledVector(barrelAxis,-pull.dot(barrelAxis)).normalize();
    const attachment=grip.position.clone().addScaledVector(pull,.15);this.link(line,anchor,attachment.toArray());
-   straps.forEach((strap,i)=>this.link(strap,point([i? .08:-.08,.013,-.006]).toArray(),attachment.toArray()));
+   straps.forEach((strap,i)=>this.link(strap,point([i? .08:-.08,0,0]).toArray(),attachment.toArray()));
   }
-  if(this.id===10&&this.plate)this.plate.position.set(0,a.hand[1],a.hand[2]);
+  if(this.id===10&&this.plate)this.plate.position.copy(both);
   if(this.id===12&&this.ball){
    const u=phase%1;
-   if(u<.22){this.ball.visible=true;this.ball.position.set(0,a.hand[1],a.hand[2]+.04);}
+   if(u<.22){this.ball.visible=true;this.ball.position.set(0,both.y,both.z+.04);}
    else if(u<.66){const time=(u-.22)*1.7;this.ball.visible=true;this.ball.position.set(0,.46+1.35*time-4.9*time*time,.82+3.2*time);}
-   else {this.ball.visible=u>=.83;if(this.ball.visible)this.ball.position.set(0,a.hand[1],a.hand[2]+.04);}
+   else {this.ball.visible=u>=.83;if(this.ball.visible)this.ball.position.set(0,both.y,both.z+.04);}
   }
   this.materials.muscle.emissiveIntensity=this.highlight?.12+.15*(1-p.t):0;
  }
  setMuscles(on){this.highlight=on;this.athlete.setMuscles(on);this.onInvalidate?.();}
- view(view){const target=[3,10,11,12,14,16,18,19].includes(this.id)?[0,1.28,.10]:[6,9,15].includes(this.id)?[0,.55,.2]:[0,.83,0];this.controls.target.set(...target);const offset=view==='front'?[0,1.6,5.3]:view==='side'?[5.3,1.35,.0]:[3.7,2.5,4.0];this.camera.position.copy(v(target).add(v(offset)));this.controls.update();this.onInvalidate?.();}
+ view(view){const target=[3,10,11,12,14,16,18,19].includes(this.id)?[0,1.45,.10]:[6,9,15].includes(this.id)?[0,.55,.2]:[0,.83,0];this.controls.target.set(...target);const offset=view==='front'?[0,1.6,5.3]:view==='side'?[5.3,1.35,.0]:[3.7,2.5,4.0];this.camera.position.copy(v(target).add(v(offset)));this.controls.update();this.onInvalidate?.();}
  resize(){const w=this.host.clientWidth,h=this.host.clientHeight;if(!w||!h)return;this.camera.aspect=w/h;this.camera.updateProjectionMatrix();this.renderer.setSize(w,h);this.onInvalidate?.();}
  render(){this.controls.update();this.renderer.render(this.scene,this.camera);}
  dispose(){this.observer.disconnect();this.controls.dispose();this.athlete.dispose();const materials=new Set(Object.values(this.materials));this.scene.traverse(o=>{o.geometry?.dispose();if(o.material)for(const m of Array.isArray(o.material)?o.material:[o.material])materials.add(m);});materials.forEach(m=>m.dispose());this.renderer.dispose();this.renderer.domElement.remove();}
