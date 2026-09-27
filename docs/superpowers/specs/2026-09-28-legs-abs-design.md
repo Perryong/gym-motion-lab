@@ -7,14 +7,14 @@ Extend FORM from a chest-only studio to three body groups: Chest (existing 18), 
 Legs: 20 barbell back squat, 21 goblet squat, 22 walking lunge, 23 Romanian deadlift, 24 glute bridge, 25 standing calf raise.
 Abs: 26 crunch, 27 forearm plank, 28 lying leg raise, 29 Russian twist, 30 dead bug, 31 hanging knee raise.
 
-Each entry in `exercises.js` gains `group` ('chest' | 'legs' | 'abs'); new entries also carry `stance` (angle-label text), `phases` (two phase labels) and `split` (fraction of the cycle spent in the first phase). Chest entries keep their current app.js label logic. `displayOrder` becomes `groups = {chest:[…existing], legs:[20…25], abs:[26…31]}`.
+Each entry in `exercises.js` gains `group` ('chest' | 'legs' | 'abs'); new entries also carry `stance` (`[value, label]` for the angle badge) and `labels` (`[[start, text], …]` phase labels over the cycle, so multi-segment clips such as the lunge reset and dead bug sides are labelled correctly). Chest entries keep their current app.js label logic. `displayOrder` becomes `groups = {chest:[…existing], legs:[20…25], abs:[26…31]}`.
 
 ## Motion (new `dist/motion-body.js`)
 `poseAt(id, phase)` in motion.js dispatches ids ≥ 20 to `bodyPose(id, phase)`. Chest code is untouched.
 
 A body pose defines the trunk directly instead of deriving it from shoulders:
 - `hip` position and pelvis frame (`pelvis`: forward + up vectors).
-- `spine`: per-bone `{flex, side, twist}` radians for Spine, Chest, ShoulderLine (and Neck for head counter-motion).
+- `spine`: per-bone `[flex, side, twist]` radians for Spine, Chest and ShoulderLine. The head stays rigid with ShoulderLine so the fixed neck connection is preserved.
 - Shoulders come from forward kinematics through the same bone offsets as `makeSkeleton` (.26/.27/.27, ±.35), so `arms(s).shoulder` always equals the rig's shoulder bone. Hand targets are given explicitly; the existing two-bone arm IK solves elbows.
 - `ankles` targets with the existing knee solver; `feet` mode: `'floor'` (flat, optional `footPitch` for calf raise and toe contact) or `'shin'` (neutral ankle following the shin, for leg raises and hanging).
 - `hands(side)`: `{palm, fingers:'grip'|'open'|'relaxed'}` hint replacing the id-based hand rules for new exercises.
