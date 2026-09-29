@@ -27,7 +27,7 @@ test('reference expansion includes 18 exercises with connected arm motion',async
  const {exercises,displayOrder}=await import('../dist/exercises.js');
  assert.equal(displayOrder.length,18);
  assert.ok(!displayOrder.includes(10)&&!displayOrder.includes(12));
- assert.equal(exercises.filter(Boolean).length,18);
+ assert.equal(exercises.filter(e=>e?.group==='chest').length,18);
  for(const id of displayOrder)for(let f=0;f<=100;f++){
   const p=poseAt(id,f/100);
   for(const s of [-1,1]){

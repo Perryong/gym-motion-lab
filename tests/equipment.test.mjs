@@ -18,7 +18,7 @@ function scene(){
  return s;
 }
 test('all 18 real scenes build and animate with finite geometry and attached equipment',()=>{
- assert.equal(new Set(displayOrder).size,exercises.filter(Boolean).length);
+ assert.equal(new Set(displayOrder).size,exercises.filter(e=>e?.group==='chest').length);
  const s=scene();
  for(const id of displayOrder){
   s.setExercise(id);
