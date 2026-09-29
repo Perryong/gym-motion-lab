@@ -9,7 +9,9 @@ const mm=(A,B)=>A.map(r=>B[0].map((_,j)=>r.reduce((n,v,k)=>n+v*B[k][j],0))),mv=(
 const euler=([flex=0,side=0,twist=0]=[])=>mm(mm(R.y(twist),R.x(flex)),R.z(side));
 // Standing hip height. A function: motion.js and this module import each other,
 // so motion.js constants are only safe to read at call time.
-export const stand=()=>ANKLE_HEIGHT+LEG*.995,MAT=.045,BACK=.15;
+export const stand=()=>ANKLE_HEIGHT+LEG*.995,MAT=.045,BACK=.20;
+// How far the shoe's toe tip (0,-.18,.36 from the ankle) sits below the ankle at a heel pitch.
+const toeDepth=a=>.18*Math.cos(a)+.36*Math.sin(a);
 const smooth=x=>{x=Math.min(1,Math.max(0,x));return x*x*(3-2*x);};
 
 // Rig offsets: Spine .26 above Hips, Chest .27, ShoulderLine .27, shoulders ±.35.
@@ -51,19 +53,20 @@ export const BODY_IDS={
    hipZ=z0+L*(.5*swing+.5*follow);depth=Math.sin(Math.PI*smooth((k-.2)/.6));trailPitch[trail]=.6*depth;
   }else{const back=2*L*(1-smooth((u-.84)/.16));feet[0]=[-.14,back,0];feet[1]=[.14,back,0];hipZ=back;}
   // Hips never rise higher than both feet can reach (the body dips as it travels).
-  const reach=([x,z,lift=0])=>ANKLE_HEIGHT+lift+Math.sqrt((LEG*.995)**2-(hipZ-z)**2-(Math.abs(x)-HIP)**2);
+  const reach=([x,z,lift=0],i)=>Math.max(ANKLE_HEIGHT,toeDepth(trailPitch[i])+.01)+lift+Math.sqrt((LEG*.995)**2-(hipZ-z)**2-(Math.abs(x)-HIP)**2);
   return pose({t:depth,hip:[0,Math.min(stand()-.47*depth,...feet.map(reach)),hipZ],pitch:.08,focus:[0,1.0,.75],footPitch:trailPitch,
-   ankles:feet.map(([x,z,lift])=>[x,ANKLE_HEIGHT+(lift??0),z]),hands:hang});},
+   ankles:feet.map(([x,z,lift],i)=>[x,Math.max(ANKLE_HEIGHT,toeDepth(trailPitch[i])+.01)+(lift??0),z]),hands:hang});},
  // Romanian deadlift: soft fixed knees, hips back, neutral-spine hinge.
  23:u=>{const t=cycleT(u,.56);
   return pose({t,hip:[0,stand()-.03-.1*t,-.05-.25*t],pitch:1.1*t,focus:[0,1.0,0],
    ankles:[[-.14,ANKLE_HEIGHT,0],[.14,ANKLE_HEIGHT,0]],
    hands:(s,T)=>{const sh=T.shoulder(s);return {at:[s*.24,sh[1]-.84,sh[2]+.16],pole:[s*.3,0,-1],palm:[0,0,-1],fingers:'grip'};}});},
  // Glute bridge: shoulders stay on the mat; the trunk pivots up about them.
- 24:u=>{const t=cycleT(u,.5),a=.5*t,S=[0,BACK,-.55],pitch=-Math.PI/2-a;
-  return pose({t,hip:hipFor(S,pitch,{}),pitch,focus:[0,.4,.2],
+ 24:u=>{const t=cycleT(u,.5),a=.5*t,S=[0,BACK,-.55],pitch=-Math.PI/2-a,spine={ShoulderLine:[a]};
+  // The upper back bends so the head stays level on the mat as the hips lift.
+  return pose({t,hip:hipFor(S,pitch,spine),pitch,spine,focus:[0,.4,.2],
    ankles:[[-.16,ANKLE_HEIGHT+MAT,1.0],[.16,ANKLE_HEIGHT+MAT,1.0]],
-   hands:s=>({at:[s*.42,.09,.15],pole:[s*.2,1,0],palm:[0,-1,0],fingers:'open'})});},
+   hands:s=>({at:[s*.42,BACK+.03,.15],pole:[s*.2,1,0],palm:[0,-1,0],fingers:'open'})});},
  // Standing calf raise: the forefoot contact on the step edge stays fixed.
  25:u=>{const t=cycleT(u,.5),a=-.3+.75*t,STEP=.15,c=[0,-ANKLE_HEIGHT,.15];
   const ankle=x=>[x,STEP-(c[1]*Math.cos(a)-c[2]*Math.sin(a)),.18-(c[1]*Math.sin(a)+c[2]*Math.cos(a))];
@@ -75,16 +78,16 @@ export const BODY_IDS={
    ankles:[[-.15,ANKLE_HEIGHT+MAT,.75],[.15,ANKLE_HEIGHT+MAT,.75]],
    hands:(s,T)=>({at:T.at([-s*.12,-.12,.15]),pole:T.dir([s,-.3,.6]),palm:T.dir([0,0,-1]),fingers:'relaxed'})});},
  // Forearm plank: straight line from toes to shoulders; a slow breath is the cycle.
- 27:u=>{const b=Math.sin(2*Math.PI*u),S=[0,.53,.9],toe=.228+MAT,beta=Math.asin((S[1]-toe)/(LEG+.8)),pitch=Math.PI/2-beta,spine={Chest:[.02*b]};
+ 27:u=>{const b=Math.sin(2*Math.PI*u),S=[0,.53,.9],toe=toeDepth(1.1)+MAT+.01,beta=Math.asin((S[1]-toe)/(LEG+.8)),pitch=Math.PI/2-beta,spine={Chest:[.02*b]};
   const hip=hipFor(S,pitch,spine),up=[0,Math.sin(beta),Math.cos(beta)];
-  return pose({t:(b+1)/2,hip,pitch,spine,focus:[0,.35,.2],footPitch:[1.35,1.35],
+  return pose({t:(b+1)/2,hip,pitch,spine,focus:[0,.35,.2],footPitch:[1.1,1.1],
    ankles:[-1,1].map(s=>add([s*HIP,hip[1],hip[2]],mul(up,-LEG*.999))),
-   hands:s=>({at:[s*.16,.09,S[2]+.4],pole:[s*.3,-1,-.3],palm:[0,-1,0],fingers:'open'})});},
+   hands:s=>({at:[s*.16,.13,S[2]+.4],pole:[s*.3,-1,-.3],palm:[0,-1,0],fingers:'open'})});},
  // Lying leg raise: straight legs from ~9° to ~86°; trunk still.
  28:u=>{const t=cycleT(u,.5),a=.15+1.35*t;
   return pose({t,hip:[0,BACK,0],pitch:-Math.PI/2,feet:'shin',focus:[0,.4,.3],
    ankles:[-1,1].map(s=>[s*HIP,BACK+LEG*.999*Math.sin(a),LEG*.999*Math.cos(a)]),
-   hands:s=>({at:[s*.42,.09,-.1],pole:[s*.2,1,0],palm:[0,-1,0],fingers:'open'})});},
+   hands:s=>({at:[s*.42,BACK+.03,-.1],pole:[s*.2,1,0],palm:[0,-1,0],fingers:'open'})});},
  // Russian twist: reclined ~40°, twist spread over the spine carries the plate.
  29:u=>{const tw=.55*Math.sin(2*Math.PI*u),spine={Spine:[0,0,.3*tw],Chest:[.1,0,.3*tw],ShoulderLine:[0,0,.4*tw]};
   return pose({t:Math.abs(tw)/.55,hip:[0,BACK+.02,0],pitch:-.7,spine,knee:[0,1,.2],focus:[0,.5,.2],

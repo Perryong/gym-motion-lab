@@ -125,3 +125,23 @@ test('new equipment sits in the hands',async()=>{
   if(id===31){const bar=s.pullBar.getWorldPosition(new THREE.Vector3());assert.ok(Math.abs(bar.y-mid.y)<1e-6&&Math.abs(bar.z-mid.z)<1e-6,'pull-up bar through palms');}
  }
 });
+
+test('muscle highlight follows the selected group',async()=>{
+ const {readFile}=await import('node:fs/promises'),{GLTFLoader}=await import('../dist/vendor/loaders/GLTFLoader.js'),{Athlete}=await import('../dist/athlete.js');
+ const b=await readFile(new URL('../dist/assets/athlete.glb',import.meta.url)),gltf=await new GLTFLoader().parseAsync(b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength),'');
+ const a=new Athlete(gltf),lit=name=>a.meshes.map(m=>m.material).find(m=>m.name===name).emissive.getHex()!==0;
+ a.setMuscles(true,'chest');assert.ok(lit('FocusChest')&&!lit('FocusLegs'));
+ a.setMuscles(true,'legs');assert.ok(lit('FocusLegs')&&lit('FocusLegsSkin')&&!lit('FocusChest'));
+ a.setMuscles(true,'abs');assert.ok(lit('FocusAbs')&&!lit('FocusLegs'));
+ a.setMuscles(false,'abs');assert.ok(!lit('FocusAbs'));
+});
+
+test('floor and mat exercises keep the skin above the floor',async()=>{
+ const {readFile}=await import('node:fs/promises'),{GLTFLoader}=await import('../dist/vendor/loaders/GLTFLoader.js'),{Athlete}=await import('../dist/athlete.js');
+ const b=await readFile(new URL('../dist/assets/athlete.glb',import.meta.url)),gltf=await new GLTFLoader().parseAsync(b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength),'');
+ const a=new Athlete(gltf),m=a.meshes.find(x=>x.material.name==='Body'),p=m.geometry.attributes.position,v=new THREE.Vector3();
+ for(const id of BODY)for(const phase of [0,.25,.5,.75]){
+  a.update(id,phase);let low=Infinity;for(let i=0;i<p.count;i+=7){m.getVertexPosition(i,v).applyMatrix4(m.matrixWorld);low=Math.min(low,v.y);}
+  assert.ok(low>-.02,`skin below floor ${id} ${phase}: ${low}`);
+ }
+});

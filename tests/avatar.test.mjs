@@ -15,7 +15,7 @@ test('the published athlete asset is a skinned body with all named clips and val
  assert.ok(mesh.skeleton.bones.some(b=>b.name==='R_Index1'));
  const weight=mesh.geometry.getAttribute('skinWeight');
  for(let i=0;i<weight.count;i++)assert.ok(Math.abs(weight.getX(i)+weight.getY(i)+weight.getZ(i)+weight.getW(i)-1)<1e-5);
- assert.deepEqual([...new Set(meshes.map(m=>m.material.name))].sort(),['Body','FocusChest','Outfit']);
+ assert.deepEqual([...new Set(meshes.map(m=>m.material.name))].sort(),['Body','FocusAbs','FocusChest','FocusLegs','FocusLegsSkin','Outfit']);
  const index=mesh.geometry.getAttribute('skinIndex'),bones=mesh.skeleton.bones.length;
  for(let i=0;i<index.count;i++)for(let k=0;k<4;k++)assert.ok(index.getComponent(i,k)<bones,'skin index within skeleton');
  for(const m of meshes)assert.ok(m.geometry.index.count>0&&m.geometry.getAttribute('uv'),'textured primitives');

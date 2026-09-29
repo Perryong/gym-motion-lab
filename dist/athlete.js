@@ -12,7 +12,7 @@ async function textures(){
 }
 export async function loadAthlete(){
  const [gltf,maps]=await Promise.all([new GLTFLoader().loadAsync(asset('athlete.glb')),textures()]);
- gltf.scene.traverse(o=>{if(!o.isMesh)return;for(const m of [o.material].flat()){const t=maps[m.name==='Body'?'body':'outfit'];
+ gltf.scene.traverse(o=>{if(!o.isMesh)return;for(const m of [o.material].flat()){const t=maps[['Body','FocusLegsSkin'].includes(m.name)?'body':'outfit'];
   Object.assign(m,{map:t.baseColor,normalMap:t.normal,roughnessMap:t.metallicRoughness,metalnessMap:t.metallicRoughness,roughness:1,metalness:1});m.needsUpdate=true;}});
  return gltf;
 }
@@ -20,7 +20,8 @@ export class Athlete {
  constructor(gltf){
   this.group=gltf.scene;this.map={};this.group.traverse(o=>{if(o.isBone)this.map[o.name]=o;if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(o.isSkinnedMesh)o.frustumCulled=false;}});
   this.surface=this.group.getObjectByName('AthleteSurface');this.meshes=[];this.surface.traverse(o=>{if(o.isSkinnedMesh)this.meshes.push(o);});this.mesh=this.meshes[0];
-  this.focusMaterial=this.meshes.map(o=>o.material).flat().find(m=>m.name==='FocusChest');this.baseColor=this.focusMaterial.color.clone();
+  // Highlight materials per body group; each keeps its own base colour.
+  this.focus={};for(const m of new Set(this.meshes.map(o=>o.material).flat())){const g={FocusChest:'chest',FocusLegs:'legs',FocusLegsSkin:'legs',FocusAbs:'abs'}[m.name];if(g){(this.focus[g]??=[]).push(m);m.userData.base=m.color.clone();}}
   this.mixer=new THREE.AnimationMixer(this.group);this.clips=gltf.animations;this.id=-1;
  }
  update(id,phase){
@@ -29,6 +30,6 @@ export class Athlete {
   // Resolve exact equipment anchors after clip interpolation. Bone lengths never scale.
   const pose=applyRigPose(this.group,this.map,id,phase);this.meshes.forEach(m=>m.skeleton.update());return pose;
  }
- setMuscles(on){this.focusMaterial.color.copy(on?new THREE.Color(0xb5ed60):this.baseColor);this.focusMaterial.emissive.setHex(on?0x345609:0);this.focusMaterial.emissiveIntensity=on?.28:0;}
+ setMuscles(on,group='chest'){for(const [g,list] of Object.entries(this.focus))for(const m of list){const lit=on&&g===group;m.color.copy(lit?new THREE.Color(0xb5ed60):m.userData.base);m.emissive.setHex(lit?0x345609:0);m.emissiveIntensity=lit?.28:0;}}
  dispose(){this.mixer.stopAllAction();this.mixer.uncacheRoot(this.group);}
 }

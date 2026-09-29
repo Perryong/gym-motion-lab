@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import {OrbitControls} from './vendor/OrbitControls.js';
 import {poseAt} from './motion.js';
 import {Athlete} from './athlete.js';
+import {exercises} from './exercises.js';
 const v=a=>new THREE.Vector3(...a),Y=new THREE.Vector3(0,1,0);
 // Handle centre inside the curled fingers, in hand-bone space (fingers +Y,
 // palm +Z); fitted to the athlete's finger joints at gripping curl.
@@ -90,6 +91,7 @@ export class Studio {
   if(id===31){for(const side of [-1,1]){this.rod(e,[side*1.0,.05,-.2],[side*1.0,3.6,-.2],.05,m.metal);this.rod(e,[side*1.0,.05,-.6],[side*1.0,.05,.3],.06,m.metal);}this.pullBar=this.rod(e,[-1,0,0],[1,0,0],.025,m.chrome);}
   this.weights.forEach(w=>w.visible=[0,1,2,5,7,8,13,21].includes(id));if(id===5||id===21)this.weights[1].visible=false;
   this.bar.visible=[4,17,20,23].includes(id);this.plate.visible=[10,29].includes(id);this.ball.visible=id===12;
+  this.athlete.setMuscles(!!this.highlight,exercises[id].group);
   this.update(0);this.view('perspective');
  }
  update(phase){this.phase=phase;const p=poseAt(this.id,phase);this.root.position.set(...p.root);this.root.rotation.set(p.rotation,0,0);
@@ -125,7 +127,7 @@ export class Studio {
   }
   this.materials.muscle.emissiveIntensity=this.highlight?.12+.15*(1-p.t):0;
  }
- setMuscles(on){this.highlight=on;this.athlete.setMuscles(on);this.onInvalidate?.();}
+ setMuscles(on){this.highlight=on;this.athlete.setMuscles(on,exercises[this.id].group);this.onInvalidate?.();}
  view(view){const focus=poseAt(this.id,0).focus,target=focus??([3,10,11,12,14,16,18,19].includes(this.id)?[0,1.45,.10]:[6,9,15].includes(this.id)?[0,.55,.2]:[0,.83,0]);this.controls.target.set(...target);const offset=view==='front'?[0,1.6,5.3]:view==='side'?[5.3,1.35,.0]:[3.7,2.5,4.0];this.camera.position.copy(v(target).add(v(offset)));this.controls.update();this.onInvalidate?.();}
  resize(){const w=this.host.clientWidth,h=this.host.clientHeight;if(!w||!h)return;this.camera.aspect=w/h;this.camera.updateProjectionMatrix();this.renderer.setSize(w,h);this.onInvalidate?.();}
  render(){this.controls.update();this.renderer.render(this.scene,this.camera);}
