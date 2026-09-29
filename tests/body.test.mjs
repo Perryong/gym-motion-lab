@@ -76,3 +76,17 @@ test('rig applies body spine bends, palm directions and foot modes',async()=>{
  }
  delete BODY_IDS[99];
 });
+
+test('all six leg exercises are implemented',()=>{for(const id of [20,21,22,23,24,25])assert.ok(built.has(id),`leg pose ${id}`);});
+
+test('calf raise pivots about a fixed forefoot contact on the step',()=>{
+ const contact=(p,i)=>{const a=p.footPitch[i],c=[0,-.2,.15];return [p.ankles[i][0],p.ankles[i][1]+c[1]*Math.cos(a)-c[2]*Math.sin(a),p.ankles[i][2]+c[1]*Math.sin(a)+c[2]*Math.cos(a)];};
+ const base=poseAt(25,0);
+ for(let f=0;f<=20;f++){const p=poseAt(25,f/20);for(const i of [0,1])assert.ok(dist(contact(p,i),contact(base,i))<1e-9,`forefoot slid ${f}`);}
+ assert.ok(poseAt(25,.5).footPitch[0]>.3&&poseAt(25,0).footPitch[0]<-.2,'heels travel below and above the step');
+});
+
+test('walking lunge advances two steps then resets to the start',()=>{
+ assert.ok(poseAt(22,.8).hip[2]>1.2,'hips travel forward');
+ assert.ok(Math.abs(poseAt(22,.999).hip[2])<.01,'reset returns to start');
+});

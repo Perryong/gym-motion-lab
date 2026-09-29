@@ -37,5 +37,37 @@ export const BODY_IDS={
   return pose({t,hip:[0,stand()-.56*t,-.32*t],pitch:.62*t,focus:[0,1.1,0],
    ankles:[[-.2,ANKLE_HEIGHT,.02],[.2,ANKLE_HEIGHT,.02]],
    hands:(s,T)=>({at:add(T.at([0,-.1,-.16]),[s*.5,0,0]),pole:[s*.4,-1,-.4],palm:T.dir([0,0,1]),fingers:'grip'})});},
+ // Goblet squat: same leg pattern, more upright; one dumbbell held at the chest.
+ 21:u=>{const t=cycleT(u,.56);
+  return pose({t,hip:[0,stand()-.56*t,-.28*t],pitch:.35*t,focus:[0,1.1,0],
+   ankles:[[-.2,ANKLE_HEIGHT,.02],[.2,ANKLE_HEIGHT,.02]],
+   hands:(s,T)=>({at:T.at([s*.07,-.24,.2]),pole:[s*.3,-1,.3],palm:T.dir([-s,0,0]),fingers:'grip'})});},
+ // Walking lunge: two alternating steps of L, then a labelled glide back.
+ 22:u=>{const L=.75,step=.42,feet=[[-.14,0],[.14,0]];let hipZ,depth=0,trailPitch=[0,0];
+  if(u<.84){const n=u<step?0:1,k=(u-n*step)/step,z0=n*L,lead=n?0:1,trail=1-lead;
+   const swing=smooth(k/.3),follow=smooth((k-.7)/.3);
+   feet[lead]=[feet[lead][0],z0+L*swing,.1*Math.sin(Math.PI*Math.min(1,k/.3))];
+   feet[trail]=[feet[trail][0],z0+L*follow,.1*Math.sin(Math.PI*Math.max(0,(k-.7)/.3))];
+   hipZ=z0+L*(.5*swing+.5*follow);depth=Math.sin(Math.PI*smooth((k-.2)/.6));trailPitch[trail]=.6*depth;
+  }else{const back=2*L*(1-smooth((u-.84)/.16));feet[0]=[-.14,back,0];feet[1]=[.14,back,0];hipZ=back;}
+  // Hips never rise higher than both feet can reach (the body dips as it travels).
+  const reach=([x,z,lift=0])=>ANKLE_HEIGHT+lift+Math.sqrt((LEG*.995)**2-(hipZ-z)**2-(Math.abs(x)-HIP)**2);
+  return pose({t:depth,hip:[0,Math.min(stand()-.47*depth,...feet.map(reach)),hipZ],pitch:.08,focus:[0,1.0,.75],footPitch:trailPitch,
+   ankles:feet.map(([x,z,lift])=>[x,ANKLE_HEIGHT+(lift??0),z]),hands:hang});},
+ // Romanian deadlift: soft fixed knees, hips back, neutral-spine hinge.
+ 23:u=>{const t=cycleT(u,.56);
+  return pose({t,hip:[0,stand()-.03-.1*t,-.05-.25*t],pitch:1.1*t,focus:[0,1.0,0],
+   ankles:[[-.14,ANKLE_HEIGHT,0],[.14,ANKLE_HEIGHT,0]],
+   hands:(s,T)=>{const sh=T.shoulder(s);return {at:[s*.24,sh[1]-.84,sh[2]+.16],pole:[s*.3,0,-1],palm:[0,0,-1],fingers:'grip'};}});},
+ // Glute bridge: shoulders stay on the mat; the trunk pivots up about them.
+ 24:u=>{const t=cycleT(u,.5),a=.5*t,S=[0,BACK,-.55],pitch=-Math.PI/2-a;
+  return pose({t,hip:hipFor(S,pitch,{}),pitch,focus:[0,.4,.2],
+   ankles:[[-.16,ANKLE_HEIGHT+MAT,1.0],[.16,ANKLE_HEIGHT+MAT,1.0]],
+   hands:s=>({at:[s*.42,.09,.15],pole:[s*.2,1,0],palm:[0,-1,0],fingers:'open'})});},
+ // Standing calf raise: the forefoot contact on the step edge stays fixed.
+ 25:u=>{const t=cycleT(u,.5),a=-.3+.75*t,STEP=.15,c=[0,-ANKLE_HEIGHT,.15];
+  const ankle=x=>[x,STEP-(c[1]*Math.cos(a)-c[2]*Math.sin(a)),.18-(c[1]*Math.sin(a)+c[2]*Math.cos(a))];
+  const ankles=[ankle(-.12),ankle(.12)];
+  return pose({t,hip:[0,ankles[0][1]+LEG*.995,ankles[0][2]-.03],focus:[0,1.1,0],footPitch:[a,a],ankles,hands:hang});},
 };
 export function bodyPose(id,u){const make=BODY_IDS[id];if(!make)throw new Error('No body pose for '+id);return make(((u%1)+1)%1);}
