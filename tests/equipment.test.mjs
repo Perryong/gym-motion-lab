@@ -4,7 +4,7 @@ import {registerHooks} from 'node:module';
 registerHooks({resolve(specifier,context,next){return specifier==='three'?{url:new URL('../dist/vendor/three.module.js',import.meta.url).href,shortCircuit:true}:next(specifier,context);}});
 const THREE=await import('../dist/vendor/three.module.js');
 const {Studio,GRIP}=await import('../dist/scene.js');
-const {exercises,displayOrder}=await import('../dist/exercises.js');
+const {exercises,allIds}=await import('../dist/exercises.js');
 const {poseAt}=await import('../dist/motion.js');
 const {readFile}=await import('node:fs/promises');
 const {GLTFLoader}=await import('../dist/vendor/loaders/GLTFLoader.js');
@@ -18,9 +18,9 @@ function scene(){
  return s;
 }
 test('all 18 real scenes build and animate with finite geometry and attached equipment',()=>{
- assert.equal(new Set(displayOrder).size,exercises.filter(e=>e?.group==='chest').length);
+ assert.equal(new Set(allIds).size,exercises.filter(Boolean).length);
  const s=scene();
- for(const id of displayOrder){
+ for(const id of allIds){
   s.setExercise(id);
   for(const phase of [0,.125,.25,.5,.65,.875,1]){
    s.update(phase);s.scene.updateMatrixWorld(true);
@@ -37,10 +37,10 @@ test('all 18 real scenes build and animate with finite geometry and attached equ
    const palm=side=>s.athlete.map[(side<0?'L':'R')+'_Hand'].localToWorld(new THREE.Vector3(...GRIP));
    for(const c of s.cables)assert.ok(palm(c.side).distanceTo(c.grip.position)<1e-8,'cable handle in palm');
    for(const c of s.machineArms)assert.ok(palm(c.side).distanceTo(c.grip.position)<1e-8,'machine grip in palm');
-   for(let i=0;i<2;i++)if(s.weights[i].visible&&id!==5)assert.ok(s.root.localToWorld(s.weights[i].position.clone()).distanceTo(palm(i===0?-1:1))<1e-8,'dumbbell in palm');
+   for(let i=0;i<2;i++)if(s.weights[i].visible&&![5,21].includes(id))assert.ok(s.root.localToWorld(s.weights[i].position.clone()).distanceTo(palm(i===0?-1:1))<1e-8,'dumbbell in palm');
   }
   assert.equal(s.cables.length,id===11?1:id===16?2:0);
   assert.equal(s.rings.length,id===19?2:0);
-  assert.equal(s.bar.visible,[4,17].includes(id));
+  assert.equal(s.bar.visible,[4,17,20,23].includes(id));
  }
 });

@@ -43,10 +43,10 @@ export class Studio {
  makeBar(){const g=new THREE.Group();this.rod(g,[-1.24,0,0],[1.24,0,0],.025,this.materials.chrome);for(const s of [-1,1]){const p=this.mesh(new THREE.CylinderGeometry(.26,.26,.10,40),this.materials.dark,g);p.rotation.z=Math.PI/2;p.position.x=s*1.02;const ring=this.mesh(new THREE.CylinderGeometry(.12,.12,.108,24),this.materials.metal,g);ring.rotation.z=Math.PI/2;ring.position.x=s*1.02;}return g;}
  clearEquipment(){while(this.equipment.children.length){const c=this.equipment.children[0];c.traverse(o=>{if(o.geometry)o.geometry.dispose();});this.equipment.remove(c);}}
  setExercise(id){this.id=id;this.clearEquipment();const e=this.equipment,m=this.materials;
-  this.machineArms=[];this.cables=[];this.rings=[];
+  this.machineArms=[];this.cables=[];this.rings=[];this.pullBar=null;
   const seated=[3,18].includes(id),bench=[0,2,4,5,7,8,13,17].includes(id),inclined=[0,13,17].includes(id);
   if(id===6){this.box(e,[0,.35,-.67],[1.35,.70,.88],m.pad);this.box(e,[0,.717,-.67],[1.38,.034,.91],m.joint);}
-  else if([1,9,15].includes(id)){this.box(e,[0,.025,.15],[1.55,.04,3.0],m.shorts);}
+  else if([1,9,15,24,26,27,28,29,30].includes(id)){this.box(e,[0,.025,.15],[1.55,.04,3.0],m.shorts);}
   else if(seated){
    this.box(e,[0,.71,.15],[.7,.12,.64],m.pad);this.box(e,[0,1.40,-.22],[.65,1.2,.14],m.pad);
    for(const side of [-1,1]){this.rod(e,[side*.86,.08,-.30],[side*.86,2.3,-.30],.047,m.metal);this.rod(e,[side*.86,.08,-.30],[side*.86,.08,.70],.05,m.metal);}
@@ -85,8 +85,11 @@ export class Studio {
    }
    this.rod(e,[-1.0,2.80,-.035],[1.0,2.80,-.035],.045,m.metal);
   }
-  this.weights.forEach(w=>w.visible=[0,1,2,5,7,8,13].includes(id));if(id===5)this.weights[1].visible=false;
-  this.bar.visible=[4,17].includes(id);this.plate.visible=id===10;this.ball.visible=id===12;
+  if(id===20)for(const side of [-1,1]){this.rod(e,[side*.78,.08,-.2],[side*.78,2.0,-.2],.045,m.metal);this.rod(e,[side*.78,.09,-.55],[side*.78,.09,.25],.055,m.metal);this.box(e,[side*.78,1.45,-.12],[.08,.05,.16],m.dark);}
+  if(id===25)this.box(e,[0,.075,.26],[.9,.15,.5],m.pad);
+  if(id===31){for(const side of [-1,1]){this.rod(e,[side*1.0,.05,-.2],[side*1.0,3.6,-.2],.05,m.metal);this.rod(e,[side*1.0,.05,-.6],[side*1.0,.05,.3],.06,m.metal);}this.pullBar=this.rod(e,[-1,0,0],[1,0,0],.025,m.chrome);}
+  this.weights.forEach(w=>w.visible=[0,1,2,5,7,8,13,21].includes(id));if(id===5||id===21)this.weights[1].visible=false;
+  this.bar.visible=[4,17,20,23].includes(id);this.plate.visible=[10,29].includes(id);this.ball.visible=id===12;
   this.update(0);this.view('perspective');
  }
  update(phase){this.phase=phase;const p=poseAt(this.id,phase);this.root.position.set(...p.root);this.root.rotation.set(p.rotation,0,0);
@@ -95,9 +98,9 @@ export class Studio {
   const bone=s=>this.athlete.map[(s<0?'L':'R')+'_Hand'],palm=s=>this.root.worldToLocal(bone(s).localToWorld(v(GRIP)));
   const both=palm(-1).add(palm(1)).multiplyScalar(.5),rootQ=this.root.getWorldQuaternion(new THREE.Quaternion()).invert();
   this.weights.forEach((w,i)=>{const s=i===0?-1:1;w.position.copy(palm(s));w.quaternion.copy(rootQ).multiply(bone(s).getWorldQuaternion(new THREE.Quaternion()));
-   if(this.id===5){w.position.copy(both);w.rotation.set(0,0,Math.PI/2);}
+   if(this.id===5||this.id===21){w.position.copy(both);w.rotation.set(0,0,Math.PI/2);}
   });
-  if([4,17].includes(this.id)){this.bar.position.set(0,both.y,both.z);}
+  if([4,17,20,23].includes(this.id)){this.bar.position.set(0,both.y,both.z);}
   this.root.updateMatrixWorld(true);
   for(const {arm,grip,side} of this.machineArms??[]){const hand=this.root.localToWorld(palm(side));this.link(arm,[side*.86,1.74,-.30],hand.toArray());grip.position.copy(hand);}
   // Each ring hangs from its strap with the fist closed around the lower rim.
@@ -112,7 +115,8 @@ export class Studio {
    const attachment=grip.position.clone().addScaledVector(pull,.15);this.link(line,anchor,attachment.toArray());
    straps.forEach((strap,i)=>this.link(strap,point([i? .08:-.08,0,0]).toArray(),attachment.toArray()));
   }
-  if(this.id===10&&this.plate)this.plate.position.copy(both);
+  if([10,29].includes(this.id)&&this.plate){this.plate.position.copy(both);if(this.id===29)this.plate.quaternion.setFromUnitVectors(new THREE.Vector3(1,0,0),palm(1).sub(palm(-1)).normalize());}
+  if(this.pullBar)this.link(this.pullBar,[-1,both.y,both.z],[1,both.y,both.z]);
   if(this.id===12&&this.ball){
    const u=phase%1;
    if(u<.22){this.ball.visible=true;this.ball.position.set(0,both.y,both.z+.04);}
@@ -122,7 +126,7 @@ export class Studio {
   this.materials.muscle.emissiveIntensity=this.highlight?.12+.15*(1-p.t):0;
  }
  setMuscles(on){this.highlight=on;this.athlete.setMuscles(on);this.onInvalidate?.();}
- view(view){const target=[3,10,11,12,14,16,18,19].includes(this.id)?[0,1.45,.10]:[6,9,15].includes(this.id)?[0,.55,.2]:[0,.83,0];this.controls.target.set(...target);const offset=view==='front'?[0,1.6,5.3]:view==='side'?[5.3,1.35,.0]:[3.7,2.5,4.0];this.camera.position.copy(v(target).add(v(offset)));this.controls.update();this.onInvalidate?.();}
+ view(view){const focus=poseAt(this.id,0).focus,target=focus??([3,10,11,12,14,16,18,19].includes(this.id)?[0,1.45,.10]:[6,9,15].includes(this.id)?[0,.55,.2]:[0,.83,0]);this.controls.target.set(...target);const offset=view==='front'?[0,1.6,5.3]:view==='side'?[5.3,1.35,.0]:[3.7,2.5,4.0];this.camera.position.copy(v(target).add(v(offset)));this.controls.update();this.onInvalidate?.();}
  resize(){const w=this.host.clientWidth,h=this.host.clientHeight;if(!w||!h)return;this.camera.aspect=w/h;this.camera.updateProjectionMatrix();this.renderer.setSize(w,h);this.onInvalidate?.();}
  render(){this.controls.update();this.renderer.render(this.scene,this.camera);}
  dispose(){this.observer.disconnect();this.controls.dispose();this.athlete.dispose();const materials=new Set(Object.values(this.materials));this.scene.traverse(o=>{o.geometry?.dispose();if(o.material)for(const m of Array.isArray(o.material)?o.material:[o.material])materials.add(m);});materials.forEach(m=>m.dispose());this.renderer.dispose();this.renderer.domElement.remove();}

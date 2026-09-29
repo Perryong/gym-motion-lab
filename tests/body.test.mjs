@@ -108,3 +108,20 @@ test('hanging knee raise keeps both hands on the bar',()=>{
  const a=poseAt(31,0);for(let f=1;f<=20;f++)for(const s of [-1,1])assert.ok(dist(poseAt(31,f/20).arms(s).hand,a.arms(s).hand)<1e-9);
  for(const i of [0,1])assert.ok(a.ankles[i][1]>ANKLE_H,'feet clear the floor while hanging');
 });
+
+test('new equipment sits in the hands',async()=>{
+ const {readFile}=await import('node:fs/promises'),{GLTFLoader}=await import('../dist/vendor/loaders/GLTFLoader.js'),{Studio,GRIP}=await import('../dist/scene.js');
+ const bytes=await readFile(new URL('../dist/assets/athlete.glb',import.meta.url)),asset=await new GLTFLoader().parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
+ const s=Object.create(Studio.prototype);s.scene=new THREE.Scene();s.materials={};
+ for(const name of ['skin','muscle','shorts','joint','shirt','hair','eye','shoe','metal','dark','chrome','lime','pad'])s.materials[name]=new THREE.MeshStandardMaterial();
+ s.phase=0;s.highlight=false;s.createAthlete(asset);s.equipment=new THREE.Group();s.scene.add(s.equipment);s.camera=new THREE.PerspectiveCamera();s.controls={target:new THREE.Vector3(),update(){}};
+ const palm=side=>s.athlete.map[(side<0?'L':'R')+'_Hand'].localToWorld(new THREE.Vector3(...GRIP));
+ for(const id of [20,21,23,29,31])for(const phase of [0,.3,.6]){
+  s.setExercise(id);s.update(phase);s.scene.updateMatrixWorld(true);
+  const mid=palm(-1).add(palm(1)).multiplyScalar(.5);
+  if([20,23].includes(id))assert.ok(s.bar.getWorldPosition(new THREE.Vector3()).distanceTo(new THREE.Vector3(0,mid.y,mid.z))<1e-6,`bar ${id}`);
+  if(id===21)assert.ok(s.weights[0].getWorldPosition(new THREE.Vector3()).distanceTo(mid)<1e-6&&!s.weights[1].visible,'goblet dumbbell');
+  if(id===29)assert.ok(s.plate.visible&&s.plate.getWorldPosition(new THREE.Vector3()).distanceTo(mid)<1e-6,'twist plate');
+  if(id===31){const bar=s.pullBar.getWorldPosition(new THREE.Vector3());assert.ok(Math.abs(bar.y-mid.y)<1e-6&&Math.abs(bar.z-mid.z)<1e-6,'pull-up bar through palms');}
+ }
+});

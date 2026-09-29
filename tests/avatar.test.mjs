@@ -3,13 +3,14 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {registerHooks} from 'node:module';
 registerHooks({resolve(s,c,n){return s==='three'?{url:new URL('../dist/vendor/three.module.js',import.meta.url).href,shortCircuit:true}:n(s,c);}});
-test('the published athlete asset is a skinned body with all 18 named clips and valid bindings',async()=>{
+test('the published athlete asset is a skinned body with all named clips and valid bindings',async()=>{
  const {GLTFLoader}=await import('../dist/vendor/loaders/GLTFLoader.js');
  const b=await readFile(new URL('../dist/assets/athlete.glb',import.meta.url));
  const gltf=await new GLTFLoader().parseAsync(b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength),'');
  const surface=gltf.scene.getObjectByName('AthleteSurface'),meshes=[];surface?.traverse(o=>{if(o.isSkinnedMesh)meshes.push(o);});const mesh=meshes[0];
  assert.ok(mesh?.isSkinnedMesh,'athlete must deform with a skeleton');
- assert.equal(gltf.animations.length,18);
+ const {allIds}=await import('../dist/exercises.js');
+ assert.equal(gltf.animations.length,allIds.length);
  assert.ok(mesh.skeleton.bones.some(b=>b.name==='Neck'));
  assert.ok(mesh.skeleton.bones.some(b=>b.name==='R_Index1'));
  const weight=mesh.geometry.getAttribute('skinWeight');
