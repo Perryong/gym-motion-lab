@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {displayOrder} from './exercises.js';
+import {allIds} from './exercises.js';
 import {poseAt,solveArm,THIGH,SHIN,HIP} from './motion.js';
 // Hand-local joint positions (fingers along +Y, palm toward +Z) and hand bind
 // rotations measured from the athlete model by scripts/export-charter-blender.py.
@@ -8,8 +8,8 @@ export const FINGERS={R_Index:[[-.0331,.1573,.0051],[-.03,.2027,.0136],[-.027,.2
 // middle and end knuckle clears the barrel without floating off it).
 const GRIP_CURL={Index:[.4,.75,.83],Middle:[.55,.75,.83],Ring:[.55,.55,.6],Pinky:[.3,.4,.44]};
 export const HAND_BIND={R:[.4817,.4567,-.5257,.532],L:[.4966,-.4153,.561,.5159]};
-const V=a=>new THREE.Vector3(...a),Y=new THREE.Vector3(0,1,0);
-export const durationFor=id=>id===12?4.8:[3,5,8,11,13,16].includes(id)?5.6:5;
+const V=a=>new THREE.Vector3(...a),Y=new THREE.Vector3(0,1,0),X=new THREE.Vector3(1,0,0);
+export const durationFor=id=>({12:4.8,22:7,27:6,30:7})[id]??([3,5,8,11,13,16].includes(id)?5.6:5);
 export function makeSkeleton(){
  const bones=[],map={};
  function bone(name,parent,pos){const b=new THREE.Bone();b.name=name;b.position.set(...pos);if(parent)map[parent].add(b);map[name]=b;bones.push(b);return b;}
@@ -32,7 +32,11 @@ function orient(bone,desired,space){
 export function applyRigPose(group,map,id,phase){
  const p=poseAt(id,phase),center=V(p.arms(1).shoulder).add(V(p.arms(-1).shoulder)).multiplyScalar(.5),axis=center.clone().sub(V(p.hip)).normalize();
  const space=group.getWorldQuaternion(new THREE.Quaternion());
- map.Hips.position.set(...p.hip);map.Hips.quaternion.setFromUnitVectors(Y,axis);if(p.prone)map.Hips.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(Y,Math.PI));
+ map.Hips.position.set(...p.hip);
+ if(p.body)map.Hips.quaternion.setFromAxisAngle(X,p.pitch);
+ else{map.Hips.quaternion.setFromUnitVectors(Y,axis);if(p.prone)map.Hips.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(Y,Math.PI));}
+ // Spine bends (body poses only); chest poses keep a straight spine.
+ for(const b of ['Spine','Chest','ShoulderLine']){const [flex=0,side=0,twist=0]=p.spine?.[b]??[];map[b].quaternion.setFromEuler(new THREE.Euler(flex,twist,side,'YXZ'));}
  group.updateMatrixWorld(true);
  for(const s of [-1,1]){const n=s<0?'L':'R',side=p.prone?-s:s,i=side<0?0:1;
   const relaxed=id===11&&s===-1,cableGrip=(id===11&&s===1)||id===16;
@@ -50,41 +54,44 @@ export function applyRigPose(group,map,id,phase){
    const y=V(a).sub(V(b)).normalize(),x=lateral.clone().addScaledVector(y,-lateral.dot(y)).normalize(),z=x.clone().cross(y).normalize();
    orient(map[name],new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(x,y,z)),space);
   }
-  const qFoot=new THREE.Quaternion().setFromEuler(new THREE.Euler(-p.rotation,0,0));
+  let qFoot=new THREE.Quaternion().setFromEuler(new THREE.Euler(-p.rotation,0,0));
   // Reverse the shoe facing without changing ankle height or toe contact.
   if(p.prone)qFoot.setFromEuler(new THREE.Euler(1.95,0,0)).premultiply(new THREE.Quaternion().setFromAxisAngle(Y,Math.PI));
+  // Body poses: flat on the floor with optional heel pitch, or neutral with the shin.
+  if(p.body)qFoot=p.feet==='shin'?map[n+'_Shin'].getWorldQuaternion(new THREE.Quaternion()).premultiply(space.clone().invert()):new THREE.Quaternion().setFromAxisAngle(X,p.footPitch[i]);
   orient(map[n+'_Foot'],qFoot,space);
   let x=V([1,0,0]),y=V(hand).sub(V(elbow)).normalize();
-  if([7,8,13].includes(id))x=V([0,1,0]);
-  if([3,11,16,18].includes(id))x=V([0,1,0]);
-  // Neutral grips (dips, rings): palms face the midline on both sides.
-  if(id===14||id===19)x=V([0,0,-Math.sign(hand[0])]);
-  // Push-ups: fingers toward the head (-Z), palms flat on the support (-Y).
-  if(p.prone&&id!==19){y=V([0,0,-1]);x=V([-1,0,0]);}
-  if(relaxed){
-   x=V([0,0,1]).addScaledVector(y,-y.z).normalize();
-  }else if(cableGrip){
-   // Local +Z is the finger-curl/palm side: it must point inward.
-   x=V([0,-s,0]).addScaledVector(y,s*y.y).normalize();
-  }else{y.addScaledVector(x,-y.dot(x)).normalize();if(y.lengthSq()<.1)y=V([0,0,1]);}
-  const z=x.clone().cross(y).normalize();y=z.clone().cross(x).normalize();
-  const qHand=new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(x,y,z));
-  orient(map[n+'_Hand'],qHand,space);
   const open=(p.prone&&id!==19)||(id===12&&phase%1>=.22&&phase%1<.83),plate=id===10;
-  for(const f of ['Index','Middle','Ring','Pinky'])for(let j=1;j<=3;j++)map[n+'_'+f+j].rotation.set(open?.06:plate?.3:GRIP_CURL[f][j-1],0,0);
-  map[n+'_Thumb1'].rotation.set(open?.15:.85,0,s*-.65);map[n+'_Thumb2'].rotation.set(open?.1:1.0,0,0);
-  if(cableGrip){
-   // Fingers already wrap the barrel (GRIP_CURL); oppose the thumb.
-   map[n+'_Thumb1'].rotation.set(.8,0,-s*.9);map[n+'_Thumb2'].rotation.set(.9,0,0);
-  }else if(relaxed){
-   for(const f of ['Index','Middle','Ring','Pinky'])for(let j=1;j<=3;j++)map[n+'_'+f+j].rotation.set([.15,.30,.22][j-1],0,0);
-   map[n+'_Thumb1'].rotation.set(.2,0,s*.15);map[n+'_Thumb2'].rotation.set(.25,0,0);
+  const mode=p.body?p.hands(side).fingers:cableGrip?'cable':relaxed?'relaxed':open?'open':plate?'plate':'grip';
+  if(p.body){
+   // Fingers follow the forearm; the palm faces the requested direction.
+   const palm=V(p.hands(side).palm);palm.addScaledVector(y,-palm.dot(y)).normalize();x=y.clone().cross(palm);
+  }else{
+   if([7,8,13].includes(id))x=V([0,1,0]);
+   if([3,11,16,18].includes(id))x=V([0,1,0]);
+   // Neutral grips (dips, rings): palms face the midline on both sides.
+   if(id===14||id===19)x=V([0,0,-Math.sign(hand[0])]);
+   // Push-ups: fingers toward the head (-Z), palms flat on the support (-Y).
+   if(p.prone&&id!==19){y=V([0,0,-1]);x=V([-1,0,0]);}
+   if(relaxed)x=V([0,0,1]).addScaledVector(y,-y.z).normalize();
+   // Local +Z is the finger-curl/palm side: it must point inward.
+   else if(cableGrip)x=V([0,-s,0]).addScaledVector(y,s*y.y).normalize();
+   else{y.addScaledVector(x,-y.dot(x)).normalize();if(y.lengthSq()<.1)y=V([0,0,1]);}
   }
+  const z=x.clone().cross(y).normalize();y=z.clone().cross(x).normalize();
+  orient(map[n+'_Hand'],new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(x,y,z)),space);
+  const curl={open:[.06,.06,.06],plate:[.3,.3,.3],relaxed:[.15,.30,.22]}[mode];
+  for(const f of ['Index','Middle','Ring','Pinky'])for(let j=1;j<=3;j++)map[n+'_'+f+j].rotation.set(curl?curl[j-1]:GRIP_CURL[f][j-1],0,0);
+  // Thumb: opposed around a handle, flat when open, loose when relaxed.
+  const thumb={open:[.15,s*.65,.1],relaxed:[.2,-s*.15,.25],cable:[.8,s*.9,.9]}[mode]??[.85,s*.65,1.0];
+  map[n+'_Thumb1'].rotation.set(thumb[0],0,-thumb[1]);map[n+'_Thumb2'].rotation.set(thumb[2],0,0);
  }
  group.updateMatrixWorld(true);return p;
 }
+// Temporary: bake only ids whose poses exist while body poses are added.
+const BODY_READY=id=>{try{poseAt(id,0);return true;}catch{return false;}};
 export function createExerciseClips(group,map){
- return displayOrder.map(id=>{
+ return allIds.filter(id=>id<20||BODY_READY(id)).map(id=>{
   const duration=durationFor(id),times=[],tracks=[],samples=new Map(Object.values(map).map(b=>[b.name,{position:[],quaternion:[]}]));
   for(let f=0;f<=80;f++){
    const phase=f/80;times.push(phase*duration);applyRigPose(group,map,id,phase);

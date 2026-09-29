@@ -1,8 +1,19 @@
+import {bodyPose} from './motion-body.js';
 const add=(a,b)=>a.map((v,i)=>v+b[i]),sub=(a,b)=>a.map((v,i)=>v-b[i]),mul=(a,s)=>a.map(v=>v*s),dot=(a,b)=>a.reduce((n,v,i)=>n+v*b[i],0),norm=a=>mul(a,1/(Math.hypot(...a)||1));
 // Leg proportions measured from the athlete model (scene units; torso is .8).
 export const THIGH=.687,SHIN=.595,HIP=.124,LEG=THIGH+SHIN,ANKLE_HEIGHT=.20;
 // Local ankle target for a world floor point, given the root height and pitch.
 const planted=(x,z,root,rotation)=>{const y=ANKLE_HEIGHT-root[1],c=Math.cos(-rotation),s=Math.sin(-rotation);return [x,y*c-z*s,y*s+z*c];};
+// Eased 0→1→0 over one cycle: controlled first phase, smooth turnaround.
+export const cycleT=(u,split)=>{const c=u<split?u/split:1-(u-split)/(1-split);return c*c*(3-2*c);};
+// Knee joints for fixed THIGH/SHIN legs, bending toward the pole direction.
+export function solveKnees(hip,ankles,pole=[0,0,1]){
+ return ankles.map((ankle,i)=>{
+  const origin=[(i?1:-1)*HIP,hip[1],hip[2]],delta=sub(ankle,origin),d=Math.hypot(...delta);
+  const axis=norm(delta),along=(THIGH*THIGH-SHIN*SHIN+d*d)/(2*d),bend=norm(sub(pole,mul(axis,dot(pole,axis))));
+  return add(add(origin,mul(axis,along)),mul(bend,Math.sqrt(Math.max(0,THIGH*THIGH-along*along))));
+ });
+}
 export function solveArm(shoulder,hand,pole,length=.44){
  const delta=sub(hand,shoulder),d=Math.hypot(...delta),axis=norm(delta);
  const projected=sub(pole,mul(axis,dot(pole,axis))); const bend=norm(projected);
@@ -10,10 +21,9 @@ export function solveArm(shoulder,hand,pole,length=.44){
 }
 export function poseAt(id,phase){
  const u=((phase%1)+1)%1;
+ if(id>=20)return bodyPose(id,u);
  // Controlled lowering and a slightly quicker return, with smooth turnaround.
- const split=[10,12].includes(id)?.5:.56;
- const cycle=u<split?u/split:1-(u-split)/(1-split);
- const t=cycle*cycle*(3-2*cycle);
+ const t=cycleT(u,[10,12].includes(id)?.5:.56);
  const shoulder=s=>[s*.35,.54,0];
  const inclined=[0,13,17].includes(id),gravity=[0,inclined?.5:0,inclined?Math.sqrt(3)/2:1];
  const pressing=(s,bar=false,floor=false)=>{
@@ -86,12 +96,7 @@ export function poseAt(id,phase){
  hip=sub(shoulderCenter,mul(torsoAxis,.8));
  // The same leg lengths are used in every exercise. Targets are reachable by
  // construction; solve the knee instead of stretching the leg.
- knees=ankles.map((ankle,i)=>{
-  const origin=[(i?1:-1)*HIP,hip[1],hip[2]],delta=sub(ankle,origin),d=Math.hypot(...delta);
-  const axis=norm(delta),along=(THIGH*THIGH-SHIN*SHIN+d*d)/(2*d);
-  const reference=[0,0,1],pole=norm(sub(reference,mul(axis,dot(reference,axis))));
-  return add(add(origin,mul(axis,along)),mul(pole,Math.sqrt(Math.max(0,THIGH*THIGH-along*along))));
- });
+ knees=solveKnees(hip,ankles);
  const neck=add(shoulderCenter,mul(torsoAxis,.10));
  return {t,arms,root,rotation,hip,neck,knees,ankles,prone:[6,9,15,19].includes(id)};
 }
