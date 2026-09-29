@@ -43,7 +43,7 @@ export const BODY_IDS={
  21:u=>{const t=cycleT(u,.56);
   return pose({t,hip:[0,stand()-.56*t,-.28*t],pitch:.35*t,focus:[0,1.1,0],
    ankles:[[-.2,ANKLE_HEIGHT,.02],[.2,ANKLE_HEIGHT,.02]],
-   hands:(s,T)=>({at:T.at([s*.07,-.24,.2]),pole:[s*.3,-1,.3],palm:T.dir([-s,0,0]),fingers:'grip'})});},
+   hands:(s,T)=>({at:T.at([s*.07,-.22,.34]),pole:[s*.3,-1,.3],palm:T.dir([-s,0,0]),fingers:'grip'})});},
  // Walking lunge: two alternating steps of L, then a labelled glide back.
  22:u=>{const L=.75,step=.42,feet=[[-.14,0],[.14,0]];let hipZ,depth=0,trailPitch=[0,0];
   if(u<.84){const n=u<step?0:1,k=(u-n*step)/step,z0=n*L,lead=n?0:1,trail=1-lead;
@@ -92,7 +92,7 @@ export const BODY_IDS={
  29:u=>{const tw=.55*Math.sin(2*Math.PI*u),spine={Spine:[0,0,.3*tw],Chest:[.1,0,.3*tw],ShoulderLine:[0,0,.4*tw]};
   return pose({t:Math.abs(tw)/.55,hip:[0,BACK+.02,0],pitch:-.7,spine,knee:[0,1,.2],focus:[0,.5,.2],
    ankles:[[-.15,ANKLE_HEIGHT+MAT,.78],[.15,ANKLE_HEIGHT+MAT,.78]],
-   hands:(s,T)=>({at:add(T.at([0,-.2,.34]),T.dir([s*.13,0,0])),pole:T.dir([s,-1,0]),palm:T.dir([-s,0,0]),fingers:'grip'})});},
+   hands:(s,T)=>({at:add(T.at([0,-.2,.34]),T.dir([s*.21,0,0])),pole:T.dir([s,-1,0]),palm:T.dir([-s,0,0]),fingers:'grip'})});},
  // Dead bug: opposite arm and leg extend on each half of the cycle.
  30:u=>{const half=u<.5?0:1,e=Math.sin(Math.PI*(u-.5*half)/.5)**2,arm=half?-1:1;
   return pose({t:e,hip:[0,BACK,0],pitch:-Math.PI/2,feet:'shin',focus:[0,.45,.1],

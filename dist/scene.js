@@ -117,7 +117,7 @@ export class Studio {
    const attachment=grip.position.clone().addScaledVector(pull,.15);this.link(line,anchor,attachment.toArray());
    straps.forEach((strap,i)=>this.link(strap,point([i? .08:-.08,0,0]).toArray(),attachment.toArray()));
   }
-  if([10,29].includes(this.id)&&this.plate){this.plate.position.copy(both);if(this.id===29)this.plate.quaternion.setFromUnitVectors(new THREE.Vector3(1,0,0),palm(1).sub(palm(-1)).normalize());}
+  if([10,29].includes(this.id)&&this.plate){this.plate.position.copy(both);if(this.id===29){const chest=this.athlete.map.ShoulderLine.getWorldQuaternion(new THREE.Quaternion());this.plate.quaternion.copy(rootQ).multiply(chest).multiply(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(1,0,0),new THREE.Vector3(0,0,1)));}}
   if(this.pullBar)this.link(this.pullBar,[-1,both.y,both.z],[1,both.y,both.z]);
   if(this.id===12&&this.ball){
    const u=phase%1;
