@@ -10,7 +10,7 @@ function renderGroup(){
   button.innerHTML=`<span class="num">${String(position+1).padStart(2,'0')}</span><span><strong>${e.short}</strong><small>${e.type} · ${e.focus}</small></span><span class="card-arrow">↗</span>`;
   button.onclick=()=>selectExercise(i);cards[i]=button;return button;}));
  $('exercise-total').textContent=$('counter-total').textContent=String(ids.length);
- $('group-title').textContent=meta.title;$('group-region').textContent=meta.region;$('group-note').textContent=meta.note;
+ $('group-title').textContent=meta.title;$('group-region').textContent=meta.region;$('group-note').textContent=meta.note;$('legend-text').textContent=meta.overlay;
  $('technique-link').href=meta.link[0];$('technique-link').textContent=meta.link[1];
  document.querySelectorAll('[data-group]').forEach(b=>{const on=b.dataset.group===group;b.setAttribute('aria-selected',String(on));b.tabIndex=on?0:-1;});
 }

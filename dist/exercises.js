@@ -46,8 +46,8 @@ exercises.push(
 export const groups={chest:displayOrder,legs:[20,21,22,23,24,25],abs:[26,27,28,29,30,31]};
 export const allIds=[...groups.chest,...groups.legs,...groups.abs];
 export const GROUP_META={
- chest:{label:'Chest',title:'Chest',region:'UPPER BODY',note:'18 chest exercises, each with its own demonstration and form cues.',link:['https://www.acefitness.org/resources/everyone/exercise-library/19/chest-press/','Chest press technique · ACE ↗']},
- legs:{label:'Legs',title:'Legs',region:'LOWER BODY',note:'6 leg exercises for quads, glutes, hamstrings and calves.',link:['https://www.acefitness.org/resources/everyone/exercise-library/135/bodyweight-squat/','Squat technique · ACE ↗']},
- abs:{label:'Abs',title:'Core',region:'CORE',note:'6 core exercises for spinal flexion, bracing and rotation.',link:['https://www.acefitness.org/resources/everyone/exercise-library/32/front-plank/','Plank technique · ACE ↗']}
+ chest:{label:'Chest',title:'Chest',region:'UPPER BODY',overlay:'Chest overlay',note:'18 chest exercises, each with its own demonstration and form cues.',link:['https://www.acefitness.org/resources/everyone/exercise-library/19/chest-press/','Chest press technique · ACE ↗']},
+ legs:{label:'Legs',title:'Legs',region:'LOWER BODY',overlay:'Legs overlay',note:'6 leg exercises for quads, glutes, hamstrings and calves.',link:['https://www.acefitness.org/resources/everyone/exercise-library/135/bodyweight-squat/','Squat technique · ACE ↗']},
+ abs:{label:'Abs',title:'Core',region:'CORE',overlay:'Core overlay',note:'6 core exercises for spinal flexion, bracing and rotation.',link:['https://www.acefitness.org/resources/everyone/exercise-library/32/front-plank/','Plank technique · ACE ↗']}
 };
 export const groupFromHash=hash=>{const g=String(hash??'').replace(/^#/,'').toLowerCase();return Object.hasOwn(groups,g)?g:'chest';};

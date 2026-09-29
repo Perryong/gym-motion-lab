@@ -145,3 +145,11 @@ test('floor and mat exercises keep the skin above the floor',async()=>{
   assert.ok(low>-.02,`skin below floor ${id} ${phase}: ${low}`);
  }
 });
+
+test('the muscle legend names the current group overlay',async()=>{
+ const {readFile}=await import('node:fs/promises');
+ assert.deepEqual(['chest','legs','abs'].map(g=>GROUP_META[g].overlay),['Chest overlay','Legs overlay','Core overlay']);
+ const html=await readFile(new URL('../dist/index.html',import.meta.url),'utf8'),app=await readFile(new URL('../dist/app.js',import.meta.url),'utf8');
+ assert.match(html,/<span class="muscle-legend"><i><\/i> <span id="legend-text">Chest overlay<\/span><\/span>/);
+ assert.match(app,/\$\('legend-text'\)\.textContent=meta\.overlay/);
+});
