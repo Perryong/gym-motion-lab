@@ -6,3 +6,5 @@
 /* Keep the expanded exercise collection within reach of the viewer. */
 @media(min-width:651px){.exercise-list{max-height:620px;overflow-y:auto;padding-right:5px;scrollbar-width:thin;scrollbar-color:#586748 transparent}.library{position:sticky;top:16px}.reference-note{margin-top:14px}}
 .muscle-legend{opacity:.35}#equipment-tag{max-width:52%;text-align:right;font-size:10px;line-height:1.4}.viewer-top{gap:10px}@media(max-width:650px){#equipment-tag{font-size:9px}.exercise-card{flex-basis:196px}}
+
+.group-tabs{display:flex;gap:4px;margin:0 0 12px;padding:3px;background:#181c18;border-radius:7px}.group-tabs button{flex:1;border:0;background:none;color:#9ba98c;font-size:13px;padding:8px 6px;border-radius:5px}.group-tabs button[aria-selected=true]{background:#36422b;color:var(--lime)}.eyebrow b{font-weight:600}h1 #group-title{color:inherit}

@@ -1,6 +1,6 @@
-# FORM — Chest Training Studio
+# FORM — Movement Studio
 
-Interactive Three.js website with 18 chest exercises, a custom skinned athlete, exercise equipment, orbit/zoom, camera presets, play/pause, speed and scrub controls, muscle highlights and written form cues.
+Interactive Three.js website with three body groups — 18 chest, 6 leg and 6 core exercises — switched with Chest / Legs / Abs tabs (linkable as `#chest`, `#legs`, `#abs`), a custom skinned athlete, exercise equipment, orbit/zoom, camera presets, play/pause, speed and scrub controls, muscle highlights and written form cues.
 
 Serve `dist` over HTTP. Native modules do not load from a `file://` URL. Three.js 0.185.1 and matching r185 addons are vendored with the MIT license. No model service, API key or runtime external asset host is required.
 
@@ -8,7 +8,7 @@ Serve `dist` over HTTP. Native modules do not load from a `file://` URL. Three.j
 
 The athlete is "Charter T-Pose" by Tim0, from Sketchfab (https://sketchfab.com/3d-models/558a75ed32274e0d868ac22468565453), licensed CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). It was refitted to FORM's own skeleton: the mesh was re-posed onto the rig's rest joints, re-weighted to FORM bone names from the model's original skin weights, and given a Muscles-highlight region on the shirt's chest panel. Textures ship as JPEGs beside `dist/assets/athlete.glb` and are applied by `athlete.js`.
 
-The skeleton keeps 48 bones and 18 baked exercise clips. Arms keep fixed .44/.44 segments and the torso .8 (scene units, not meters). Legs (.687 thigh, .595 shin) and hip width (.124) are measured from the model and exported from `motion.js`. Finger joints and hand bind rotations are measured from the model (`FINGERS`, `HAND_BIND` in `rig.js`). Equipment is seated at a grip point inside the curled fingers (`GRIP` in `scene.js`), not at the IK wrist target.
+The skeleton keeps 48 bones and 30 baked exercise clips. Arms keep fixed .44/.44 segments and the torso .8 (scene units, not meters). Legs (.687 thigh, .595 shin) and hip width (.124) are measured from the model and exported from `motion.js`. Finger joints and hand bind rotations are measured from the model (`FINGERS`, `HAND_BIND` in `rig.js`). Equipment is seated at a grip point inside the curled fingers (`GRIP` in `scene.js`), not at the IK wrist target.
 
 AnimationMixer controls deterministic clip playback; runtime IK resolves exact grip and support targets after interpolation. Clips are illustrative animations, not certified biomechanics or motion capture.
 
@@ -22,7 +22,8 @@ AnimationMixer controls deterministic clip playback; runtime IK resolves exact g
 ## Code organization
 
 - `exercises.js`: exercise names and explanations.
-- `motion.js`: pose targets and fixed-length limb solving.
+- `motion.js`: chest pose targets and fixed-length limb solving.
+- `motion-body.js`: lower-body and core poses (hip, pelvis pitch and spine bends with forward-kinematic shoulders).
 - `rig.js`: skeleton definition, contact solving and animation baking.
 - `athlete.js`: GLB loading, mixer playback and muscle material control.
 - `scene.js`: lighting, equipment and camera.
