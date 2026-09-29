@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {registerHooks} from 'node:module';
 registerHooks({resolve(s,c,n){return s==='three'?{url:new URL('../dist/vendor/three.module.js',import.meta.url).href,shortCircuit:true}:n(s,c);}});
 const {exercises,displayOrder,groups,allIds,GROUP_META,groupFromHash}=await import('../dist/exercises.js');
-const BODY=[20,21,22,23,24,25,26,27,28,29,30,31];
+const BODY=[20,21,22,23,24,25,26,27,28,29,30,31],ANKLE_H=.2;
 
 test('legs and abs groups hold six exercises each with complete copy',()=>{
  assert.deepEqual(groups.chest,displayOrder);
@@ -89,4 +89,22 @@ test('calf raise pivots about a fixed forefoot contact on the step',()=>{
 test('walking lunge advances two steps then resets to the start',()=>{
  assert.ok(poseAt(22,.8).hip[2]>1.2,'hips travel forward');
  assert.ok(Math.abs(poseAt(22,.999).hip[2])<.01,'reset returns to start');
+});
+
+test('all six ab exercises are implemented',()=>{for(const id of [26,27,28,29,30,31])assert.ok(built.has(id),`ab pose ${id}`);});
+
+test('crunch and twist spine bends stay within their stated ranges',()=>{
+ const total=(p,k)=>['Spine','Chest','ShoulderLine'].reduce((n,b)=>n+(p.spine[b]?.[k]??0),0);
+ for(let f=0;f<=40;f++){
+  const c=poseAt(26,f/40),r=poseAt(29,f/40);
+  assert.ok(total(c,0)>=0&&total(c,0)<=.65,`crunch flex ${f}`);
+  assert.ok(Math.abs(total(r,2))<=.65,`twist ${f}`);
+ }
+ assert.ok(total(poseAt(26,.5),0)>.5,'crunch reaches its curl');
+ assert.ok(total(poseAt(29,.25),2)>.4&&total(poseAt(29,.75),2)<-.4,'twist reaches both sides');
+});
+
+test('hanging knee raise keeps both hands on the bar',()=>{
+ const a=poseAt(31,0);for(let f=1;f<=20;f++)for(const s of [-1,1])assert.ok(dist(poseAt(31,f/20).arms(s).hand,a.arms(s).hand)<1e-9);
+ for(const i of [0,1])assert.ok(a.ankles[i][1]>ANKLE_H,'feet clear the floor while hanging');
 });

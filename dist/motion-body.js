@@ -69,5 +69,36 @@ export const BODY_IDS={
   const ankle=x=>[x,STEP-(c[1]*Math.cos(a)-c[2]*Math.sin(a)),.18-(c[1]*Math.sin(a)+c[2]*Math.cos(a))];
   const ankles=[ankle(-.12),ankle(.12)];
   return pose({t,hip:[0,ankles[0][1]+LEG*.995,ankles[0][2]-.03],focus:[0,1.1,0],footPitch:[a,a],ankles,hands:hang});},
+ // Crunch: ~34° curl spread over three spine bones; hips and feet fixed.
+ 26:u=>{const t=cycleT(u,.5);
+  return pose({t,hip:[0,BACK,0],pitch:-Math.PI/2,spine:{Spine:[.15*t],Chest:[.25*t],ShoulderLine:[.2*t]},focus:[0,.4,-.1],
+   ankles:[[-.15,ANKLE_HEIGHT+MAT,.75],[.15,ANKLE_HEIGHT+MAT,.75]],
+   hands:(s,T)=>({at:T.at([-s*.12,-.12,.15]),pole:T.dir([s,-.3,.6]),palm:T.dir([0,0,-1]),fingers:'relaxed'})});},
+ // Forearm plank: straight line from toes to shoulders; a slow breath is the cycle.
+ 27:u=>{const b=Math.sin(2*Math.PI*u),S=[0,.53,.9],toe=.228+MAT,beta=Math.asin((S[1]-toe)/(LEG+.8)),pitch=Math.PI/2-beta,spine={Chest:[.02*b]};
+  const hip=hipFor(S,pitch,spine),up=[0,Math.sin(beta),Math.cos(beta)];
+  return pose({t:(b+1)/2,hip,pitch,spine,focus:[0,.35,.2],footPitch:[1.35,1.35],
+   ankles:[-1,1].map(s=>add([s*HIP,hip[1],hip[2]],mul(up,-LEG*.999))),
+   hands:s=>({at:[s*.16,.09,S[2]+.4],pole:[s*.3,-1,-.3],palm:[0,-1,0],fingers:'open'})});},
+ // Lying leg raise: straight legs from ~9° to ~86°; trunk still.
+ 28:u=>{const t=cycleT(u,.5),a=.15+1.35*t;
+  return pose({t,hip:[0,BACK,0],pitch:-Math.PI/2,feet:'shin',focus:[0,.4,.3],
+   ankles:[-1,1].map(s=>[s*HIP,BACK+LEG*.999*Math.sin(a),LEG*.999*Math.cos(a)]),
+   hands:s=>({at:[s*.42,.09,-.1],pole:[s*.2,1,0],palm:[0,-1,0],fingers:'open'})});},
+ // Russian twist: reclined ~40°, twist spread over the spine carries the plate.
+ 29:u=>{const tw=.55*Math.sin(2*Math.PI*u),spine={Spine:[0,0,.3*tw],Chest:[.1,0,.3*tw],ShoulderLine:[0,0,.4*tw]};
+  return pose({t:Math.abs(tw)/.55,hip:[0,BACK+.02,0],pitch:-.7,spine,knee:[0,1,.2],focus:[0,.5,.2],
+   ankles:[[-.15,ANKLE_HEIGHT+MAT,.78],[.15,ANKLE_HEIGHT+MAT,.78]],
+   hands:(s,T)=>({at:add(T.at([0,-.2,.34]),T.dir([s*.13,0,0])),pole:T.dir([s,-1,0]),palm:T.dir([-s,0,0]),fingers:'grip'})});},
+ // Dead bug: opposite arm and leg extend on each half of the cycle.
+ 30:u=>{const half=u<.5?0:1,e=Math.sin(Math.PI*(u-.5*half)/.5)**2,arm=half?-1:1;
+  return pose({t:e,hip:[0,BACK,0],pitch:-Math.PI/2,feet:'shin',focus:[0,.45,.1],
+   ankles:[-1,1].map(s=>{const bent=[s*HIP,BACK+THIGH,SHIN],out=[s*HIP,BACK+.25,1.25];return s===-arm?add(bent,mul(sub(out,bent),e)):bent;}),
+   hands:(s,T)=>{const a=s===arm?1.35*e:0,sh=T.shoulder(s);return {at:add(sh,[0,.84*Math.cos(a),-.84*Math.sin(a)]),pole:[s,0,0],palm:[-s,0,0],fingers:'open'};}});},
+ // Hanging knee raise: hands fixed on the bar; pelvis tucks as knees rise.
+ 31:u=>{const t=cycleT(u,.45),BAR=3.25,pitch=-.25*t,spine={Spine:[.2*t]},hip=hipFor([0,BAR-.84,-.02],pitch,spine),a=.15+1.45*t;
+  return pose({t,hip,pitch,spine,feet:'shin',focus:[0,1.9,0],
+   ankles:[-1,1].map(s=>{const k=add([s*HIP,hip[1],hip[2]],[0,-THIGH*Math.cos(a),THIGH*Math.sin(a)]);return add(k,[0,-SHIN*.995,SHIN*.05]);}),
+   hands:s=>({at:[s*.46,BAR,0],pole:[s,0,0],palm:[0,0,1],fingers:'grip'})});},
 };
 export function bodyPose(id,u){const make=BODY_IDS[id];if(!make)throw new Error('No body pose for '+id);return make(((u%1)+1)%1);}

@@ -88,10 +88,8 @@ export function applyRigPose(group,map,id,phase){
  }
  group.updateMatrixWorld(true);return p;
 }
-// Temporary: bake only ids whose poses exist while body poses are added.
-const BODY_READY=id=>{try{poseAt(id,0);return true;}catch{return false;}};
 export function createExerciseClips(group,map){
- return allIds.filter(id=>id<20||BODY_READY(id)).map(id=>{
+ return allIds.map(id=>{
   const duration=durationFor(id),times=[],tracks=[],samples=new Map(Object.values(map).map(b=>[b.name,{position:[],quaternion:[]}]));
   for(let f=0;f<=80;f++){
    const phase=f/80;times.push(phase*duration);applyRigPose(group,map,id,phase);
