@@ -8,6 +8,10 @@ const count=(n,fallback,max)=>Number.isInteger(n)&&n>0&&n<=max?n:fallback;
 const kg=n=>typeof n==='number'&&Number.isFinite(n)&&n>=0?n:null;
 const valid=id=>allIds.includes(id);
 const cleanSets=sets=>Array.isArray(sets)?sets.map(s=>({kg:kg(s?.kg),reps:count(s?.reps,0,999),done:s?.done===true})):[];
+const bodyKg=n=>typeof n==='number'&&n>=20&&n<=400?Math.round(n*10)/10:null;
+const isDate=d=>typeof d==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(d)&&!Number.isNaN(Date.parse(d));
+// One entry per date (later wins), sorted oldest first.
+const cleanWeights=list=>{const byDate=new Map();for(const w of Array.isArray(list)?list:[]){const kg=bodyKg(w?.kg);if(isDate(w?.date)&&kg!==null)byDate.set(w.date,kg);}return [...byDate].sort(([a],[b])=>a<b?-1:1).map(([date,kg])=>({date,kg}));};
 const cleanEntries=entries=>Array.isArray(entries)?entries.filter(e=>valid(e?.id)).map(e=>({id:e.id,sets:cleanSets(e.sets)})):[];
 // Stored data is untrusted: anything malformed falls back to an empty week rather than breaking the app.
 export function normalize(raw){
@@ -19,7 +23,7 @@ export function normalize(raw){
  const a=data.active;
  const entries=cleanEntries(a?.entries);
  const active=a&&DAYS.includes(a.day)&&entries.length?{day:a.day,name:typeof a.name==='string'?a.name:'',started:Number(a.started)||0,index:Number.isInteger(a.index)&&a.index>=0&&a.index<entries.length?a.index:0,entries}:null;
- return {plan,history,active};
+ return {plan,history,active,weights:cleanWeights(data.weights),goal:bodyKg(data.goal)};
 }
 export function load(){try{return normalize(localStorage.getItem(KEY));}catch{return normalize(null);}}
 export function save(state){try{localStorage.setItem(KEY,JSON.stringify(state));return true;}catch{return false;}}
@@ -39,4 +43,13 @@ export function finishWorkout(state,now=Date.now()){
  const entries=a.entries.map(e=>({id:e.id,sets:e.sets.filter(s=>s.done)})).filter(e=>e.sets.length);
  if(entries.length)state.history.push({day:a.day,name:a.name,started:a.started,finished:now,entries});
  return state;
+}
+export function logWeight(state,date,value){
+ const kg=bodyKg(value);if(!isDate(date)||kg===null)throw new Error('Enter a date and a weight between 20 and 400 kg.');
+ state.weights=cleanWeights([...state.weights,{date,kg}]);return state;
+}
+export function setGoal(state,value){
+ if(value===null){state.goal=null;return state;}
+ const kg=bodyKg(value);if(kg===null)throw new Error('Enter a goal between 20 and 400 kg.');
+ state.goal=kg;return state;
 }

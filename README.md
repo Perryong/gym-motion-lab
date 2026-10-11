@@ -1,6 +1,6 @@
 # FORM — Movement Studio
 
-Mobile-first workout app: build a weekly plan, run guided workouts that log weight × reps with a rest timer, and watch every exercise demonstrated by a 3D athlete. Data stays in the browser (localStorage). Layout and feature ideas reference openGym (AGPL-3.0); no openGym code is used.
+Mobile-first workout app: a Home dashboard (week strip, today's workout, body weight with goal, week streak), Stats (totals, 12-month activity heatmap, muscle balance by body group), build a weekly plan, run guided workouts that log weight × reps with a rest timer, and watch every exercise demonstrated by a 3D athlete. Data stays in the browser (localStorage). Layout and feature ideas reference openGym (AGPL-3.0); no openGym code is used.
 
 The exercise library covers three body groups — 18 chest, 6 leg and 6 core exercises — filterable as `#exercises/chest`, `/legs`, `/abs` (old `#chest` links still work); each opens the studio at `#exercise/<id>`, a custom skinned athlete, exercise equipment, orbit/zoom, camera presets, play/pause, speed and scrub controls, muscle highlights and written form cues.
 
@@ -29,9 +29,12 @@ AnimationMixer controls deterministic clip playback; runtime IK resolves exact g
 - `rig.js`: skeleton definition, contact solving and animation baking.
 - `athlete.js`: GLB loading, mixer playback and muscle material control.
 - `scene.js`: lighting, equipment and camera.
-- `app.js`: hash router (`#exercises`, `#exercise/<id>`, `#plan`, `#workout`), day picker and toast.
+- `app.js`: hash router (`#home`, `#stats`, `#exercises`, `#exercise/<id>`, `#plan`, `#workout`), day picker and toast.
 - `studio-view.js`: studio interaction and rendering lifecycle; one viewer shared by the detail and workout views.
-- `store.js`: plan, workout and history state, validated on load from localStorage.
+- `store.js`: plan, workout, history, body weight and goal, validated on load from localStorage.
+- `stats.js`: streaks, monthly counts, weight change, heatmap and muscle-balance figures (pure).
+- `charts.js`: SVG weight chart, heatmap and body figure.
+- `home-view.js`, `stats-view.js`: Home and Stats screens.
 - `library-view.js`, `plan-view.js`, `workout-view.js`, `ui.js`: the app screens and a small DOM helper.
 
 ## Verification and limits
