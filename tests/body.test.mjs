@@ -98,10 +98,10 @@ test('crunch and twist spine bends stay within their stated ranges',()=>{
  for(let f=0;f<=40;f++){
   const c=poseAt(26,f/40),r=poseAt(29,f/40);
   assert.ok(total(c,0)>=0&&total(c,0)<=.65,`crunch flex ${f}`);
-  assert.ok(Math.abs(total(r,2))<=.65,`twist ${f}`);
+  assert.ok(Math.abs(total(r,2))<=.9,`twist ${f}`);
  }
  assert.ok(total(poseAt(26,.5),0)>.5,'crunch reaches its curl');
- assert.ok(total(poseAt(29,.25),2)>.4&&total(poseAt(29,.75),2)<-.4,'twist reaches both sides');
+ assert.ok(total(poseAt(29,.25),2)>.8&&total(poseAt(29,.75),2)<-.8,'twist reaches both sides');
 });
 
 test('hanging knee raise keeps both hands on the bar',()=>{
