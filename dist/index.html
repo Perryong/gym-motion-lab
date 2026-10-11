@@ -4,7 +4,7 @@
 <main id="app">
 <section id="view-home" class="view" aria-labelledby="home-title" hidden>
 <header class="app-head"><div><h1 id="home-title">FORM</h1><p id="home-date"></p></div></header>
-<div class="card"><ol id="week-strip" class="week-strip" aria-label="This week"></ol><div id="today-card" class="today-row"></div></div>
+<div class="card"><div class="cal-head"><button id="cal-prev" class="icon" aria-label="Previous month">‹</button><h2 id="cal-title" aria-live="polite"></h2><button id="cal-today" class="pill" hidden>Today</button><button id="cal-next" class="icon" aria-label="Next month">›</button></div><div id="cal-grid" class="cal-grid" aria-label="Training calendar"></div><p id="day-detail" class="day-detail" aria-live="polite"></p><div id="today-card" class="today-row"></div></div>
 <section class="card weight-card" aria-labelledby="weight-title"><div class="card-head"><h2 id="weight-title">Body weight</h2><span id="weight-goal" class="goal-chip"></span><button id="weight-log" class="ghost-lime">＋ Log</button></div><div id="weight-now" class="weight-now"></div><p id="weight-target" class="goal-text"></p><div id="weight-chart"></div></section>
 <div id="streak-card" class="card streak-card"></div>
 </section>

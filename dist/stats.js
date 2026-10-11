@@ -41,3 +41,15 @@ export function muscleSets(history,now=Date.now(),days=null){
 }
 // 'toward' / 'away' from the goal, or '' when there is no goal or no change.
 export const goalTrend=(fromKg,toKg,goal)=>goal===null||fromKg===toKg?'':Math.abs(toKg-goal)<Math.abs(fromKg-goal)?'toward':'away';
+// Calendar weeks (Monday first) covering every day of the month; month is 0-based.
+export function monthGrid(year,month){
+ const first=new Date(year,month,1,12).getTime(),last=new Date(year,month+1,0,12).getTime(),weeks=[];
+ for(let w=weekStart(first);w<=last;w=addDays(w,7))weeks.push(Array.from({length:7},(_,d)=>{const t=addDays(w,d);return {date:localDate(t),inMonth:new Date(t).getMonth()===month};}));
+ return weeks;
+}
+// Workouts keyed by the local date they were done, each with its completed set count.
+export function workoutsByDate(history){
+ const map=new Map();
+ for(const h of history){const key=localDate(when(h));if(!map.has(key))map.set(key,[]);map.get(key).push({...h,sets:h.entries.reduce((n,e)=>n+e.sets.filter(s=>s.done).length,0)});}
+ return map;
+}
