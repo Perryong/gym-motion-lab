@@ -77,7 +77,8 @@ export function applyRigPose(group,map,id,phase){
    if(id===14||id===19)x=V([0,0,-Math.sign(hand[0])]);
    // Push-ups: fingers toward the head (-Z), palms flat on the support (-Y).
    if(p.prone&&id!==19){y=V([0,0,-1]);x=V([-1,0,0]);}
-   if(relaxed)x=V([0,0,1]).addScaledVector(y,-y.z).normalize();
+   // Free hand on the hip: fingers forward and down over the hip, palm toward the body.
+   if(relaxed){y=V([.2,-.6,.78]).normalize();x=y.clone().cross(V([1,0,0]).addScaledVector(y,-y.x)).normalize();}
    // Local +Z is the finger-curl/palm side: it must point inward.
    else if(cableGrip)x=V([0,-s,0]).addScaledVector(y,s*y.y).normalize();
    else{y.addScaledVector(x,-y.dot(x)).normalize();if(y.lengthSq()<.1)y=V([0,0,1]);}

@@ -55,7 +55,7 @@ Push-up stance correction: straight .54/.56 legs now share the torso axis, with 
 
 Cable fly grip correction: mirrored thumbs-up palms follow each forearm, handles follow hand rotation, and straps connect the cable outside the fingers. Closing hands retain clearance.
 
-Cable grip contact refinement: thinner barrels sit inside C-shaped fingers, opposed thumbs close over the grip, and the single-cable inactive hand hangs beside the thigh with relaxed fingers.
+Cable grip contact refinement: thinner barrels sit inside C-shaped fingers, opposed thumbs close over the grip, and the single-cable inactive hand rests on the hip with the elbow out, bracing the trunk.
 
 Reference cable chest fly: staggered stance with softly bent knees and a small forward lean; a constant-radius sweep below shoulder height; pulleys lowered to the same chest-level path.
 

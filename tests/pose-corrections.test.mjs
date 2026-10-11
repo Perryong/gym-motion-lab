@@ -95,13 +95,13 @@ test('cable handle is held beyond the wrist and its strap turns toward cable ten
   }
  }
 });
-test('single cable fly free hand hangs relaxed beside the thigh',async()=>{
+test('single cable fly free hand rests on the hip with relaxed fingers',async()=>{
  const s=await scene();s.setExercise(11);
  for(const phase of [0,.3,.56,.8]){
   s.update(phase);s.scene.updateMatrixWorld(true);
   const hand=s.athlete.map.L_Hand.getWorldPosition(new THREE.Vector3()),hip=s.athlete.map.Hips.getWorldPosition(new THREE.Vector3());
-  assert.ok(hand.y<hip.y-.04,'free wrist should hang below the hip');
-  assert.ok(Math.abs(hand.z-hip.z)<.06,'free hand should hang beside the thigh');
+  assert.ok(hand.y>hip.y&&hand.y<hip.y+.25,'free wrist should sit at the waist, just above the hip');
+  assert.ok(Math.abs(hand.z-hip.z)<.08,'free hand should rest at the side of the hip');
   assert.ok(s.athlete.map.L_Index2.rotation.x<.6,'free fingers should not clench');
  }
 });

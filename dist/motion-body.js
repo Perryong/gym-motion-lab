@@ -83,8 +83,8 @@ export const BODY_IDS={
  26:u=>{const t=cycleT(u,.5);
   return pose({t,hip:[0,SEAT,0],pitch:SUPINE,spine:{Spine:[.15*t],Chest:[.25*t],ShoulderLine:[.2*t]},nod:[.25*t],focus:[0,.4,-.1],
    ankles:[[-.15,ANKLE_HEIGHT+MAT,.75],[.15,ANKLE_HEIGHT+MAT,.75]],
-   // Arms folded: each hand on the opposite shoulder, elbows resting down by the ribs.
-   hands:(s,T)=>({at:T.at([-s*.2,-.02,.13]),pole:T.dir([s*.6,-1,.1]),palm:T.dir([0,0,-1]),fingers:'relaxed'})});},
+   // Arms crossed on the chest: wrists below the shoulder line, fingers toward the opposite collarbone.
+   hands:(s,T)=>({at:T.at([-s*.1,-.2,.13]),pole:T.dir([s*.6,-1,.1]),palm:T.dir([0,0,-1]),fingers:'relaxed'})});},
  // Forearm plank: straight line from toes to shoulders; a slow breath is the cycle.
  27:u=>{const b=Math.sin(2*Math.PI*u),S=[0,.53,.9],toe=toeDepth(1.1)+MAT+.01,beta=Math.asin((S[1]-toe)/(LEG+.8)),pitch=Math.PI/2-beta,spine={Chest:[.02*b]};
   const hip=hipFor(S,pitch,spine),up=[0,Math.sin(beta),Math.cos(beta)];

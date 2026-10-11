@@ -82,3 +82,45 @@ test('walking lunge lowers the back knee toward the floor with a vertical front 
  assert.ok(shin<=15,`front shin ${shin.toFixed(0)}° from vertical`);
  assert.ok(knee>=75&&knee<=105,`front knee ${knee.toFixed(0)}°`);
 });
+
+// Fingertip and torso vertices for contact checks on the chest and waist.
+const tips={L:[],R:[]},torso=[];
+for(let i=0;i<position.count;i++){const n=main(i);if(/^L_(Index|Middle)3$/.test(n))tips.L.push(i);else if(/^R_(Index|Middle)3$/.test(n))tips.R.push(i);else if(['Hips','Spine','Chest','ShoulderLine'].includes(n))torso.push(i);}
+const world=i=>mesh.getVertexPosition(i,new THREE.Vector3()).applyMatrix4(mesh.matrixWorld);
+const nearestTorso=p=>{let d=Infinity;for(let k=0;k<torso.length;k+=3)d=Math.min(d,world(torso[k]).distanceTo(p));return d;};
+
+test('crunch hands lie crossed on the chest, fingertips not past the shoulders',()=>{
+ for(const u of [0,.25,.5,.75]){athlete.update(26,u);athlete.group.updateMatrixWorld(true);
+  const inv=athlete.map.ShoulderLine.matrixWorld.clone().invert();
+  for(const n of ['L','R']){const pts=tips[n].map(world);
+   const top=Math.max(...pts.map(p=>p.clone().applyMatrix4(inv).y));
+   assert.ok(top<=.03,`crunch u${u} ${n} fingertips ${top.toFixed(3)} past the shoulder line`);
+   const touch=Math.min(...pts.filter((_,k)=>k%4===0).map(nearestTorso));
+   assert.ok(touch<=.05,`crunch u${u} ${n} fingertips ${touch.toFixed(3)} off the chest`);}}
+});
+
+test('single-arm cable fly rests the free hand on the hip with the elbow out',()=>{
+ const {GRIP}={GRIP:[0,.174,.056]};
+ for(const u of [0,.25,.5,.75]){athlete.update(11,u);athlete.group.updateMatrixWorld(true);
+  const palm=athlete.map.L_Hand.localToWorld(new THREE.Vector3(...GRIP));
+  const d=nearestTorso(palm);assert.ok(d<=.07,`free hand ${d.toFixed(3)} away from the waist`);
+  const a=elbow(11,u,-1);
+  assert.ok(a.elbow[0]<=a.shoulder[0]-.12,`free elbow not out to the side (x ${a.elbow[0].toFixed(2)} vs shoulder ${a.shoulder[0].toFixed(2)})`);
+  assert.ok(a.hand[1]<a.elbow[1],'free hand sits below the elbow');}
+});
+
+test('dip bars run through the grip of both hands',async()=>{
+ const {Studio,GRIP}=await import('../dist/scene.js');
+ const s=Object.create(Studio.prototype);s.scene=new THREE.Scene();s.materials={};
+ for(const name of ['skin','muscle','shorts','joint','shirt','hair','eye','shoe','metal','dark','chrome','lime','pad'])s.materials[name]=new THREE.MeshStandardMaterial();
+ s.phase=0;s.highlight=false;s.createAthlete(await new GLTFLoader().parseAsync(b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength),''));
+ s.equipment=new THREE.Group();s.scene.add(s.equipment);s.camera=new THREE.PerspectiveCamera();s.controls={target:new THREE.Vector3(),update(){}};
+ s.setExercise(14);assert.equal(s.dipBars?.length,2,'two dip bars');
+ for(const u of [0,.25,.5,.75]){s.update(u);s.scene.updateMatrixWorld(true);
+  for(const {bar,side} of s.dipBars){
+   const grip=s.athlete.map[(side<0?'L':'R')+'_Hand'].localToWorld(new THREE.Vector3(...GRIP));
+   const axis=new THREE.Vector3(0,1,0).applyQuaternion(bar.getWorldQuaternion(new THREE.Quaternion())),c=bar.getWorldPosition(new THREE.Vector3());
+   const off=grip.clone().sub(c);off.addScaledVector(axis,-off.dot(axis));
+   assert.ok(off.length()<.015,`dip u${u} side ${side}: grip ${off.length().toFixed(3)} from the bar axis`);
+   assert.ok(Math.abs(axis.z)>.99,'bar runs front to back');}}
+});
