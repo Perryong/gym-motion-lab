@@ -9,7 +9,10 @@ const mm=(A,B)=>A.map(r=>B[0].map((_,j)=>r.reduce((n,v,k)=>n+v*B[k][j],0))),mv=(
 const euler=([flex=0,side=0,twist=0]=[])=>mm(mm(R.y(twist),R.x(flex)),R.z(side));
 // Standing hip height. A function: motion.js and this module import each other,
 // so motion.js constants are only safe to read at call time.
-export const stand=()=>ANKLE_HEIGHT+LEG*.995,MAT=.045,BACK=.20;
+export const stand=()=>ANKLE_HEIGHT+LEG*.995,MAT=.045,BACK=.185;
+// Lying on the back: the seat sits higher than the shoulder line (BACK), so the
+// trunk tilts head-down slightly and the head, shoulder blades and seat all touch the mat.
+const SEAT=BACK+.049,SUPINE=-Math.PI/2-Math.asin(.049/.8);
 // How far the shoe's toe tip (0,-.18,.36 from the ankle) sits below the ankle at a heel pitch.
 const toeDepth=a=>.18*Math.cos(a)+.36*Math.sin(a);
 const smooth=x=>{x=Math.min(1,Math.max(0,x));return x*x*(3-2*x);};
@@ -24,13 +27,15 @@ export function trunk(hip,pitch,spine={}){
 // Hip position that puts the shoulder-line centre at `center`.
 export const hipFor=(center,pitch,spine)=>sub(center,trunk([0,0,0],pitch,spine).center);
 
-function pose({t=0,hip,pitch=0,spine={},hands,ankles,knee,feet='floor',footPitch=[0,0],focus}){
+function pose({t=0,hip,pitch=0,spine={},nod,hands,ankles,knee,feet='floor',footPitch=[0,0],focus}){
  const T=trunk(hip,pitch,spine),h=s=>hands(s,T);
- return {t,body:true,prone:false,root:[0,0,0],rotation:0,hip,pitch,spine,feet,footPitch,focus,neck:T.neck,
+ return {t,body:true,prone:false,root:[0,0,0],rotation:0,hip,pitch,spine,nod,feet,footPitch,focus,neck:T.neck,
   arms:s=>{const x=h(s);return {shoulder:T.shoulder(s),hand:x.at,pole:x.pole};},
   hands:s=>{const x=h(s);return {palm:x.palm,fingers:x.fingers};},
   ankles,knees:solveKnees(hip,ankles,knee??T.forward)};
 }
+// Lying on the back: arms nearly straight along the sides, palms flat on the mat.
+const alongside=(s,T)=>({at:[s*.45,MAT+.12,T.shoulder(s)[2]+.8],pole:[s,0,0],palm:[0,-1,0],fingers:'open'});
 const hang=(s,T)=>({at:add(T.shoulder(s),[s*.06,-.82,.04]),pole:[s*.2,0,-1],palm:[-s,0,0],fingers:'relaxed'});
 
 export const BODY_IDS={
@@ -45,16 +50,18 @@ export const BODY_IDS={
    ankles:[[-.2,ANKLE_HEIGHT,.02],[.2,ANKLE_HEIGHT,.02]],
    hands:(s,T)=>({at:T.at([s*.07,-.22,.34]),pole:[s*.3,-1,.3],palm:T.dir([-s,0,0]),fingers:'grip'})});},
  // Walking lunge: two alternating steps of L, then a labelled glide back.
- 22:u=>{const L=.75,step=.42,feet=[[-.14,0],[.14,0]];let hipZ,depth=0,trailPitch=[0,0];
+ // Stride ≈ thigh + shin, so the back thigh can drop vertical with the knee near the floor.
+ 22:u=>{const L=1.2,step=.42,feet=[[-.14,0],[.14,0]];let hipZ,depth=0,trailPitch=[0,0];
   if(u<.84){const n=u<step?0:1,k=(u-n*step)/step,z0=n*L,lead=n?0:1,trail=1-lead;
    const swing=smooth(k/.3),follow=smooth((k-.7)/.3);
    feet[lead]=[feet[lead][0],z0+L*swing,.1*Math.sin(Math.PI*Math.min(1,k/.3))];
    feet[trail]=[feet[trail][0],z0+L*follow,.1*Math.sin(Math.PI*Math.max(0,(k-.7)/.3))];
-   hipZ=z0+L*(.5*swing+.5*follow);depth=Math.sin(Math.PI*smooth((k-.2)/.6));trailPitch[trail]=.6*depth;
+   // Hips sit a little behind the midpoint so the front knee stays over the ankle.
+   hipZ=z0+L*(.43*swing+.57*follow);depth=Math.sin(Math.PI*smooth((k-.2)/.6));trailPitch[trail]=.6*depth;
   }else{const back=2*L*(1-smooth((u-.84)/.16));feet[0]=[-.14,back,0];feet[1]=[.14,back,0];hipZ=back;}
   // Hips never rise higher than both feet can reach (the body dips as it travels).
   const reach=([x,z,lift=0],i)=>Math.max(ANKLE_HEIGHT,toeDepth(trailPitch[i])+.01)+lift+Math.sqrt((LEG*.995)**2-(hipZ-z)**2-(Math.abs(x)-HIP)**2);
-  return pose({t:depth,hip:[0,Math.min(stand()-.47*depth,...feet.map(reach)),hipZ],pitch:.08,focus:[0,1.0,.75],footPitch:trailPitch,
+  return pose({t:depth,hip:[0,Math.min(stand()-.68*depth,...feet.map(reach)),hipZ],pitch:.08,focus:[0,.95,1.2],footPitch:trailPitch,
    ankles:feet.map(([x,z,lift],i)=>[x,Math.max(ANKLE_HEIGHT,toeDepth(trailPitch[i])+.01)+(lift??0),z]),hands:hang});},
  // Romanian deadlift: soft fixed knees, hips back, neutral-spine hinge.
  23:u=>{const t=cycleT(u,.56);
@@ -62,11 +69,11 @@ export const BODY_IDS={
    ankles:[[-.14,ANKLE_HEIGHT,0],[.14,ANKLE_HEIGHT,0]],
    hands:(s,T)=>{const sh=T.shoulder(s);return {at:[s*.24,sh[1]-.84,sh[2]+.16],pole:[s*.3,0,-1],palm:[0,0,-1],fingers:'grip'};}});},
  // Glute bridge: shoulders stay on the mat; the trunk pivots up about them.
- 24:u=>{const t=cycleT(u,.5),a=.5*t,S=[0,BACK,-.55],pitch=-Math.PI/2-a,spine={ShoulderLine:[a]};
+ 24:u=>{const t=cycleT(u,.5),a=.5*t,S=[0,BACK,-.55],pitch=SUPINE-a,spine={ShoulderLine:[a]};
   // The upper back bends so the head stays level on the mat as the hips lift.
   return pose({t,hip:hipFor(S,pitch,spine),pitch,spine,focus:[0,.4,.2],
    ankles:[[-.16,ANKLE_HEIGHT+MAT,1.0],[.16,ANKLE_HEIGHT+MAT,1.0]],
-   hands:s=>({at:[s*.42,BACK+.03,.15],pole:[s*.2,1,0],palm:[0,-1,0],fingers:'open'})});},
+   hands:alongside});},
  // Standing calf raise: the forefoot contact on the step edge stays fixed.
  25:u=>{const t=cycleT(u,.5),a=-.3+.75*t,STEP=.15,c=[0,-ANKLE_HEIGHT,.15];
   const ankle=x=>[x,STEP-(c[1]*Math.cos(a)-c[2]*Math.sin(a)),.18-(c[1]*Math.sin(a)+c[2]*Math.cos(a))];
@@ -74,9 +81,10 @@ export const BODY_IDS={
   return pose({t,hip:[0,ankles[0][1]+LEG*.995,ankles[0][2]-.03],focus:[0,1.1,0],footPitch:[a,a],ankles,hands:hang});},
  // Crunch: ~34° curl spread over three spine bones; hips and feet fixed.
  26:u=>{const t=cycleT(u,.5);
-  return pose({t,hip:[0,BACK,0],pitch:-Math.PI/2,spine:{Spine:[.15*t],Chest:[.25*t],ShoulderLine:[.2*t]},focus:[0,.4,-.1],
+  return pose({t,hip:[0,SEAT,0],pitch:SUPINE,spine:{Spine:[.15*t],Chest:[.25*t],ShoulderLine:[.2*t]},nod:[.25*t],focus:[0,.4,-.1],
    ankles:[[-.15,ANKLE_HEIGHT+MAT,.75],[.15,ANKLE_HEIGHT+MAT,.75]],
-   hands:(s,T)=>({at:T.at([-s*.12,-.12,.15]),pole:T.dir([s,-.3,.6]),palm:T.dir([0,0,-1]),fingers:'relaxed'})});},
+   // Arms folded: each hand on the opposite shoulder, elbows resting down by the ribs.
+   hands:(s,T)=>({at:T.at([-s*.2,-.02,.13]),pole:T.dir([s*.6,-1,.1]),palm:T.dir([0,0,-1]),fingers:'relaxed'})});},
  // Forearm plank: straight line from toes to shoulders; a slow breath is the cycle.
  27:u=>{const b=Math.sin(2*Math.PI*u),S=[0,.53,.9],toe=toeDepth(1.1)+MAT+.01,beta=Math.asin((S[1]-toe)/(LEG+.8)),pitch=Math.PI/2-beta,spine={Chest:[.02*b]};
   const hip=hipFor(S,pitch,spine),up=[0,Math.sin(beta),Math.cos(beta)];
@@ -85,17 +93,18 @@ export const BODY_IDS={
    hands:s=>({at:[s*.16,.13,S[2]+.4],pole:[s*.3,-1,-.3],palm:[0,-1,0],fingers:'open'})});},
  // Lying leg raise: straight legs from ~9° to ~86°; trunk still.
  28:u=>{const t=cycleT(u,.5),a=.15+1.35*t;
-  return pose({t,hip:[0,BACK,0],pitch:-Math.PI/2,feet:'shin',focus:[0,.4,.3],
+  return pose({t,hip:[0,SEAT,0],pitch:SUPINE,feet:'shin',focus:[0,.4,.3],
    ankles:[-1,1].map(s=>[s*HIP,BACK+LEG*.999*Math.sin(a),LEG*.999*Math.cos(a)]),
-   hands:s=>({at:[s*.42,BACK+.03,-.1],pole:[s*.2,1,0],palm:[0,-1,0],fingers:'open'})});},
- // Russian twist: reclined ~40°, twist spread over the spine carries the plate.
- 29:u=>{const tw=.55*Math.sin(2*Math.PI*u),spine={Spine:[0,0,.3*tw],Chest:[.1,0,.3*tw],ShoulderLine:[0,0,.4*tw]};
-  return pose({t:Math.abs(tw)/.55,hip:[0,BACK+.02,0],pitch:-.7,spine,knee:[0,1,.2],focus:[0,.5,.2],
+   hands:alongside});},
+ // Russian twist: reclined ~40°; ~49° of twist spread over the spine turns the
+ // shoulders about 40° each way and carries the plate held in front of the chest.
+ 29:u=>{const tw=.85*Math.sin(2*Math.PI*u),spine={Spine:[0,0,.25*tw],Chest:[.1,0,.3*tw],ShoulderLine:[0,0,.45*tw]};
+  return pose({t:Math.abs(tw)/.85,nod:[.15],hip:[0,BACK,0],pitch:-.7,spine,knee:[0,1,.2],focus:[0,.5,.2],
    ankles:[[-.15,ANKLE_HEIGHT+MAT,.78],[.15,ANKLE_HEIGHT+MAT,.78]],
    hands:(s,T)=>({at:add(T.at([0,-.2,.34]),T.dir([s*.21,0,0])),pole:T.dir([s,-1,0]),palm:T.dir([-s,0,0]),fingers:'grip'})});},
  // Dead bug: opposite arm and leg extend on each half of the cycle.
  30:u=>{const half=u<.5?0:1,e=Math.sin(Math.PI*(u-.5*half)/.5)**2,arm=half?-1:1;
-  return pose({t:e,hip:[0,BACK,0],pitch:-Math.PI/2,feet:'shin',focus:[0,.45,.1],
+  return pose({t:e,hip:[0,SEAT,0],pitch:SUPINE,feet:'shin',focus:[0,.45,.1],
    ankles:[-1,1].map(s=>{const bent=[s*HIP,BACK+THIGH,SHIN],out=[s*HIP,BACK+.25,1.25];return s===-arm?add(bent,mul(sub(out,bent),e)):bent;}),
    hands:(s,T)=>{const a=s===arm?1.35*e:0,sh=T.shoulder(s);return {at:add(sh,[0,.84*Math.cos(a),-.84*Math.sin(a)]),pole:[s,0,0],palm:[-s,0,0],fingers:'open'};}});},
  // Hanging knee raise: hands fixed on the bar; pelvis tucks as knees rise.

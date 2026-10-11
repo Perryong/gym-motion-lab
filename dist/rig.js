@@ -37,6 +37,10 @@ export function applyRigPose(group,map,id,phase){
  else{map.Hips.quaternion.setFromUnitVectors(Y,axis);if(p.prone)map.Hips.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(Y,Math.PI));}
  // Spine bends (body poses only); chest poses keep a straight spine.
  for(const b of ['Spine','Chest','ShoulderLine']){const [flex=0,side=0,twist=0]=p.spine?.[b]??[];map[b].quaternion.setFromEuler(new THREE.Euler(flex,twist,side,'YXZ'));}
+ // Nod (chin toward chest) and turn at the skull, on top of the rest head; the neck chain stays
+ // straight. The rest is stored once so baking never accumulates.
+ map.Head.userData.rest??=map.Head.quaternion.clone();
+ {const [flex=0,turn=0]=p.nod??[];map.Head.quaternion.copy(map.Head.userData.rest).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(flex,turn,0,'YXZ')));}
  group.updateMatrixWorld(true);
  for(const s of [-1,1]){const n=s<0?'L':'R',side=p.prone?-s:s,i=side<0?0:1;
   const relaxed=id===11&&s===-1,cableGrip=(id===11&&s===1)||id===16;
