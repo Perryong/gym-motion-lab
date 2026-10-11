@@ -1,6 +1,8 @@
 # FORM — Movement Studio
 
-Interactive Three.js website with three body groups — 18 chest, 6 leg and 6 core exercises — switched with Chest / Legs / Abs tabs (linkable as `#chest`, `#legs`, `#abs`), a custom skinned athlete, exercise equipment, orbit/zoom, camera presets, play/pause, speed and scrub controls, muscle highlights and written form cues.
+Mobile-first workout app: build a weekly plan, run guided workouts that log weight × reps with a rest timer, and watch every exercise demonstrated by a 3D athlete. Data stays in the browser (localStorage). Layout and feature ideas reference openGym (AGPL-3.0); no openGym code is used.
+
+The exercise library covers three body groups — 18 chest, 6 leg and 6 core exercises — filterable as `#exercises/chest`, `/legs`, `/abs` (old `#chest` links still work); each opens the studio at `#exercise/<id>`, a custom skinned athlete, exercise equipment, orbit/zoom, camera presets, play/pause, speed and scrub controls, muscle highlights and written form cues.
 
 Serve `dist` over HTTP. Native modules do not load from a `file://` URL. Three.js 0.185.1 and matching r185 addons are vendored with the MIT license. No model service, API key or runtime external asset host is required.
 
@@ -27,7 +29,10 @@ AnimationMixer controls deterministic clip playback; runtime IK resolves exact g
 - `rig.js`: skeleton definition, contact solving and animation baking.
 - `athlete.js`: GLB loading, mixer playback and muscle material control.
 - `scene.js`: lighting, equipment and camera.
-- `app.js`: interaction and rendering lifecycle.
+- `app.js`: hash router (`#exercises`, `#exercise/<id>`, `#plan`, `#workout`), day picker and toast.
+- `studio-view.js`: studio interaction and rendering lifecycle; one viewer shared by the detail and workout views.
+- `store.js`: plan, workout and history state, validated on load from localStorage.
+- `library-view.js`, `plan-view.js`, `workout-view.js`, `ui.js`: the app screens and a small DOM helper.
 
 ## Verification and limits
 
