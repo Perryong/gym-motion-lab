@@ -51,3 +51,19 @@ test('finishing with nothing done discards the workout',()=>{
 test('an empty day cannot start a workout',()=>{
  assert.throws(()=>startWorkout(normalize(null),'tue',1));
 });
+
+test('body weight logs one entry per day and validates range',async()=>{
+ const {logWeight,setGoal}=await import('../dist/store.js');
+ const s=normalize(null);
+ assert.deepEqual(s.weights,[]);assert.equal(s.goal,null);
+ logWeight(s,'2026-10-10',78.44);logWeight(s,'2026-10-01',79);logWeight(s,'2026-10-10',78.2);
+ assert.deepEqual(s.weights,[{date:'2026-10-01',kg:79},{date:'2026-10-10',kg:78.2}]);
+ assert.throws(()=>logWeight(s,'2026-10-11',5));assert.throws(()=>logWeight(s,'yesterday',70));
+ setGoal(s,77);assert.equal(s.goal,77);setGoal(s,null);assert.equal(s.goal,null);assert.throws(()=>setGoal(s,1000));
+});
+
+test('stored weights are validated and deduplicated',()=>{
+ const s=normalize(JSON.stringify({goal:'x',weights:[{date:'2026-10-02',kg:80},{date:'bad',kg:70},{date:'2026-10-01',kg:999},{date:'2026-10-02',kg:79.5},{date:'2026-09-30',kg:81}]}));
+ assert.deepEqual(s.weights,[{date:'2026-09-30',kg:81},{date:'2026-10-02',kg:79.5}]);
+ assert.equal(s.goal,null);
+});

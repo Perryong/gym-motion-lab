@@ -2,6 +2,18 @@
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b0d0b"><meta name="description" content="Plan your week, run guided workouts and log every set, with each exercise demonstrated by an interactive 3D athlete."><title>FORM — Workout Studio</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23c2f85a'/%3E%3Cpath d='M9 24V8h15v4H14v3h8v4h-8v5' fill='%23111412'/%3E%3C/svg%3E"><link rel="stylesheet" href="./style.css"><script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script></head>
 <body>
 <main id="app">
+<section id="view-home" class="view" aria-labelledby="home-title" hidden>
+<header class="app-head"><div><h1 id="home-title">FORM</h1><p id="home-date"></p></div></header>
+<div class="card"><ol id="week-strip" class="week-strip" aria-label="This week"></ol><div id="today-card" class="today-row"></div></div>
+<section class="card weight-card" aria-labelledby="weight-title"><div class="card-head"><h2 id="weight-title">Body weight</h2><span id="weight-goal" class="goal-chip"></span><button id="weight-log" class="ghost-lime">＋ Log</button></div><div id="weight-now" class="weight-now"></div><p id="weight-target" class="goal-text"></p><div id="weight-chart"></div></section>
+<div id="streak-card" class="card streak-card"></div>
+</section>
+<section id="view-stats" class="view" aria-labelledby="stats-title" hidden>
+<header class="app-head"><div><h1 id="stats-title">Stats</h1><p>Progress &amp; history</p></div></header>
+<div id="stat-tiles" class="tiles"></div>
+<section class="card" aria-labelledby="activity-title"><h2 id="activity-title" class="card-title">Activity <span class="muted">· last 12 months, by time trained</span></h2><div id="heatmap" class="heatmap-wrap"></div><div class="heat-legend" aria-hidden="true">Less <i class="l0"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i> More</div></section>
+<section class="card" aria-labelledby="balance-title"><h2 id="balance-title" class="card-title">Muscle balance <span class="muted">· by sets worked</span></h2><div id="range-buttons" class="segmented" role="group" aria-label="Time range"></div><div id="body-map"></div><ul id="muscle-list" class="muscle-list"></ul></section>
+</section>
 <section id="view-exercises" class="view" aria-labelledby="exercises-title" hidden>
 <header class="app-head"><div><h1 id="exercises-title">Exercises</h1><p id="library-count">30 exercises in 3D motion</p></div></header>
 <input id="search" class="search" type="search" placeholder="Search…" aria-label="Search exercises" autocomplete="off">
@@ -28,7 +40,8 @@
 <div id="workout-body"></div>
 </section>
 </main>
-<nav class="tabbar" aria-label="Main"><a href="#plan" data-tab="plan"><span aria-hidden="true">▦</span>Plan</a><a href="#workout" data-tab="workout" class="start"><span class="start-disc" aria-hidden="true">⫶▬⫶</span>Start</a><a href="#exercises" data-tab="exercises"><span aria-hidden="true">☰</span>Exercises</a></nav>
+<nav class="tabbar" aria-label="Main"><a href="#home" data-tab="home"><span aria-hidden="true">⌂</span>Home</a><a href="#plan" data-tab="plan"><span aria-hidden="true">▦</span>Plan</a><a href="#workout" data-tab="workout" class="start"><span class="start-disc" aria-hidden="true">⫶▬⫶</span>Start</a><a href="#stats" data-tab="stats"><span aria-hidden="true">▮▮▮</span>Stats</a><a href="#exercises" data-tab="exercises"><span aria-hidden="true">☰</span>Exercises</a></nav>
 <dialog id="day-picker" aria-labelledby="day-picker-title"><form method="dialog"><h2 id="day-picker-title">Add to which day?</h2><p id="day-picker-exercise"></p><div id="day-picker-days" class="day-grid"></div><button value="cancel" class="ghost">Cancel</button></form></dialog>
+<dialog id="weight-dialog" aria-labelledby="weight-dialog-title"><form method="dialog"><h2 id="weight-dialog-title">Log body weight</h2><label class="field">Weight (kg)<input id="weight-kg" type="number" inputmode="decimal" min="20" max="400" step="0.1"></label><label class="field">Date<input id="weight-date" type="date"></label><label class="field">Goal (kg, optional)<input id="weight-goal-input" type="number" inputmode="decimal" min="20" max="400" step="0.1"></label><div class="dialog-actions"><button value="cancel" class="ghost" formnovalidate>Cancel</button><button value="save" class="pill solid">Save</button></div></form></dialog>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <noscript><p class="fallback">Enable JavaScript to use the 3D exercise studio.</p></noscript><script type="module" src="./app.js"></script></body></html>
