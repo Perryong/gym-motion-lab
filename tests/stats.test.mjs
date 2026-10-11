@@ -57,3 +57,23 @@ test('goal trend says whether a weight change moves toward the goal',async()=>{
  assert.equal(goalTrend(80,79,77),'toward');assert.equal(goalTrend(76,77,77),'toward');
  assert.equal(goalTrend(79,80,77),'away');assert.equal(goalTrend(79,78,null),'');assert.equal(goalTrend(78,78,77),'');
 });
+
+test('month grid starts on monday and covers whole weeks',async()=>{
+ const {monthGrid}=await import('../dist/stats.js');
+ const oct=monthGrid(2026,9); // October 2026 starts on a Thursday
+ assert.equal(oct.length,5);assert.ok(oct.every(w=>w.length===7));
+ assert.deepEqual(oct[0].slice(0,4).map(c=>[c.date,c.inMonth]),[['2026-09-28',false],['2026-09-29',false],['2026-09-30',false],['2026-10-01',true]]);
+ assert.deepEqual(oct.at(-1).at(-1),{date:'2026-11-01',inMonth:false});
+ assert.equal(oct.flat().filter(c=>c.inMonth).length,31);
+ const feb=monthGrid(2021,1); // February 2021 starts on a Monday and fills exactly four weeks
+ assert.equal(feb.length,4);assert.equal(feb[0][0].date,'2021-02-01');
+ assert.equal(monthGrid(2027,0)[0][0].date,'2026-12-28','grid crosses the year boundary');
+});
+
+test('workouts are grouped by local date with completed set counts',async()=>{
+ const {workoutsByDate}=await import('../dist/stats.js');
+ const map=workoutsByDate([at(9,8,9),at(9,8,18),at(9,10)]);
+ assert.deepEqual([...map.keys()],['2026-10-08','2026-10-10']);
+ assert.equal(map.get('2026-10-08').length,2);
+ assert.equal(map.get('2026-10-08')[0].sets,3);
+});
