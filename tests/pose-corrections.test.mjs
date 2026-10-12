@@ -46,7 +46,7 @@ test('push-up legs stay extended in line with the torso and shoes rest on their 
   assert.ok(thigh.dot(torso)<-.995,`hip/body alignment ${id} ${phase}`);
   s.setExercise(id);s.update(phase);s.scene.updateMatrixWorld(true);
   const foot=s.athlete.map.R_Foot,toe=foot.localToWorld(new THREE.Vector3(0,-.05,.22)),heel=foot.localToWorld(new THREE.Vector3(0,-.05,-.10));
-  assert.ok(toe.y<.06&&toe.y>0,`toe contact ${id}: ${toe.y}`);
+  // Floor contact is checked on the real shoe mesh in posture.test.mjs; these bone points only give direction.
   assert.ok(heel.y>toe.y+.20,`heel must be raised ${id}`);
   assert.ok(toe.z>heel.z,`shoe direction must face away from hands ${id}`);
   const sole=foot.localToWorld(new THREE.Vector3(0,-.05,.06)),laces=foot.localToWorld(new THREE.Vector3(0,.068,.06));

@@ -47,7 +47,9 @@ export class Studio {
   this.machineArms=[];this.cables=[];this.rings=[];this.dipBars=[];this.pullBar=null;
   const seated=[3,18].includes(id),bench=[0,2,4,5,7,8,13,17].includes(id),inclined=[0,13,17].includes(id);
   if(id===6){this.box(e,[0,.35,-.67],[1.35,.70,.88],m.pad);this.box(e,[0,.717,-.67],[1.38,.034,.91],m.joint);}
-  else if([1,9,15,24,26,27,28,29,30].includes(id)){this.box(e,[0,.025,.15],[1.55,.04,3.0],m.shorts);}
+  // Push-ups need the mat from the hands back past the toes, kept inside the floor disc.
+  else if(id===9||id===15){this.box(e,[0,.025,.775],[1.1,.04,2.45],m.shorts);}
+  else if([1,24,26,27,28,29,30].includes(id)){this.box(e,[0,.025,.15],[1.55,.04,3.0],m.shorts);}
   else if(seated){
    this.box(e,[0,.71,.15],[.7,.12,.64],m.pad);this.box(e,[0,1.40,-.22],[.65,1.2,.14],m.pad);
    for(const side of [-1,1]){this.rod(e,[side*.86,.08,-.30],[side*.86,2.3,-.30],.047,m.metal);this.rod(e,[side*.86,.08,-.30],[side*.86,.08,.70],.05,m.metal);}

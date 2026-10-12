@@ -1,9 +1,10 @@
-import {bodyPose} from './motion-body.js';
+import {bodyPose,MAT} from './motion-body.js';
 const add=(a,b)=>a.map((v,i)=>v+b[i]),sub=(a,b)=>a.map((v,i)=>v-b[i]),mul=(a,s)=>a.map(v=>v*s),dot=(a,b)=>a.reduce((n,v,i)=>n+v*b[i],0),norm=a=>mul(a,1/(Math.hypot(...a)||1));
 // Leg proportions measured from the athlete model (scene units; torso is .8).
 export const THIGH=.687,SHIN=.595,HIP=.124,LEG=THIGH+SHIN,ANKLE_HEIGHT=.20;
 // Local ankle target for a world floor point, given the root height and pitch.
-const planted=(x,z,root,rotation)=>{const y=ANKLE_HEIGHT-root[1],c=Math.cos(-rotation),s=Math.sin(-rotation);return [x,y*c-z*s,y*s+z*c];};
+// surface: height of what the shoe stands on (0 = floor, MAT = exercise mat).
+const planted=(x,z,root,rotation,surface=0)=>{const y=ANKLE_HEIGHT+surface-root[1],c=Math.cos(-rotation),s=Math.sin(-rotation);return [x,y*c-z*s,y*s+z*c];};
 // Eased 0→1→0 over one cycle: controlled first phase, smooth turnaround.
 export const cycleT=(u,split)=>{const c=u<split?u/split:1-(u-split)/(1-split);return c*c*(3-2*c);};
 // Knee joints for fixed THIGH/SHIN legs, bending toward the pole direction.
@@ -46,7 +47,7 @@ export function poseAt(id,phase){
  let hip=[0,-.26,0],ankles,knees;
  let root=[0,.83,0],rotation=-Math.PI/2;ankles=[-.24,.24].map(x=>planted(x,.95,root,rotation));
  if([0,13,17].includes(id)){root=[0,.95,0];rotation=-Math.PI/3;ankles=[-.24,.24].map(x=>planted(x,.92,root,rotation));}
- if(id===1){root=[0,.24,0];ankles=[-.24,.24].map(x=>planted(x,1.05,root,rotation));}
+ if(id===1){root=[0,.24,0];ankles=[-.24,.24].map(x=>planted(x,1.05,root,rotation,MAT));}
  if(id===3||id===18){root=[0,1.20,0];rotation=0;ankles=[-.23,.23].map(x=>planted(x,.72,root,rotation));}
  if([6,9,15,19].includes(id)){
   root=[0,0,0];rotation=0;
@@ -54,9 +55,11 @@ export function poseAt(id,phase){
   // and .80 torso share one axis; shortening this span bends knees. Angles keep
   // the original 1.90-long body's shoulder heights; feet sit back so the top
   // (longest-reach) position matches it exactly.
-  const raised=id===6,rings=id===19,body=LEG+.8,lift=a=>Math.asin(Math.sin(a)*1.90/body);
+  // TOE: the real shoe's toe cap reaches ~.10 below the toe point these heights were set
+  // for, so the ankles rise by it; lift() absorbs it to keep the shoulder heights.
+  const raised=id===6,rings=id===19,body=LEG+.8,TOE=.104,lift=a=>Math.asin((Math.sin(a)*1.90-TOE)/body);
   const a0=raised?.82:rings?.53:.36,a1=raised?.25:rings?.33:.27;
-  const foot=[0,(raised||rings)?.1995:.2445,(raised?.80:1.44)-1.90*Math.cos(a0)+body*Math.cos(lift(a0))];
+  const foot=[0,((raised||rings)?.1995:.2445)+TOE,(raised?.80:1.44)-1.90*Math.cos(a0)+body*Math.cos(lift(a0))];
   const ang=lift(a0-a1*t);
   hip=[0,foot[1]+Math.sin(ang)*LEG,foot[2]-Math.cos(ang)*LEG];
   const center=[0,foot[1]+Math.sin(ang)*body,foot[2]-Math.cos(ang)*body];

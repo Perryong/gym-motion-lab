@@ -109,12 +109,18 @@ test('single-arm cable fly rests the free hand on the hip with the elbow out',()
   assert.ok(a.hand[1]<a.elbow[1],'free hand sits below the elbow');}
 });
 
-test('dip bars run through the grip of both hands',async()=>{
- const {Studio,GRIP}=await import('../dist/scene.js');
+// A Studio with real equipment and the real athlete, without a WebGL renderer.
+async function studio(){
+ const {Studio}=await import('../dist/scene.js');
  const s=Object.create(Studio.prototype);s.scene=new THREE.Scene();s.materials={};
  for(const name of ['skin','muscle','shorts','joint','shirt','hair','eye','shoe','metal','dark','chrome','lime','pad'])s.materials[name]=new THREE.MeshStandardMaterial();
  s.phase=0;s.highlight=false;s.createAthlete(await new GLTFLoader().parseAsync(b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength),''));
  s.equipment=new THREE.Group();s.scene.add(s.equipment);s.camera=new THREE.PerspectiveCamera();s.controls={target:new THREE.Vector3(),update(){}};
+ return s;
+}
+
+test('dip bars run through the grip of both hands',async()=>{
+ const {GRIP}=await import('../dist/scene.js'),s=await studio();
  s.setExercise(14);assert.equal(s.dipBars?.length,2,'two dip bars');
  for(const u of [0,.25,.5,.75]){s.update(u);s.scene.updateMatrixWorld(true);
   for(const {bar,side} of s.dipBars){
@@ -143,4 +149,28 @@ test('dip feet hang relaxed in line with the shins, toes toward the floor',()=>{
    const toes=new THREE.Vector3(0,0,1).applyQuaternion(foot);
    assert.ok(toes.y<-.3,`dip u${u} ${n} toes point ${toes.toArray().map(x=>x.toFixed(2)).join(',')}, not down`);
    assert.ok(foot.angleTo(shin)<1e-6,`dip u${u} ${n} foot does not follow the shin`);}}
+});
+
+// Lowest point of the real shoe mesh, and the top of whatever is directly under it.
+const FLOOR_TOP=-.005;
+function shoeContact(s){
+ const m=s.athlete.mesh,p=m.geometry.attributes.position,si=m.geometry.attributes.skinIndex,sw=m.geometry.attributes.skinWeight;
+ const shoe=[];for(let i=0;i<p.count;i++){let bi=0,bw=-1;for(let k=0;k<4;k++){const w=sw.getComponent(i,k);if(w>bw){bw=w;bi=si.getComponent(i,k);}}if(/_Foot$/.test(m.skeleton.bones[bi].name))shoe.push(i);}
+ s.scene.updateMatrixWorld(true);let low=null;
+ for(const i of shoe){const q=m.getVertexPosition(i,new THREE.Vector3()).applyMatrix4(m.matrixWorld);if(!low||q.y<low.y)low=q;}
+ let top=FLOOR_TOP;s.equipment.traverse(o=>{if(!o.isMesh)return;const bb=new THREE.Box3().setFromObject(o);if(bb.max.y<.1&&low.x>=bb.min.x&&low.x<=bb.max.x&&low.z>=bb.min.z&&low.z<=bb.max.z)top=Math.max(top,bb.max.y);});
+ return {gap:low.y-top,onMat:top>FLOOR_TOP};
+}
+
+test('push-up shoes rest their toes on the surface, not through it',async()=>{
+ const s=await studio();
+ for(const id of [6,9,15,19]){s.setExercise(id);
+  for(let f=0;f<=20;f++){s.update(f/20);const c=shoeContact(s);
+   assert.ok(c.gap>-.012&&c.gap<.015,`push-up ${id} u${f/20}: shoe ${c.gap.toFixed(3)} from the surface`);
+   if([9,15].includes(id))assert.ok(c.onMat,`push-up ${id} u${f/20}: toes off the end of the mat`);}}
+});
+
+test('floor press shoes stand on top of the mat',async()=>{
+ const s=await studio();s.setExercise(1);
+ for(let f=0;f<=20;f++){s.update(f/20);const c=shoeContact(s);assert.ok(c.onMat&&c.gap>-.012&&c.gap<.015,`floor press u${f/20}: shoe ${c.gap.toFixed(3)} from the mat`);}
 });
