@@ -104,5 +104,5 @@ export function poseAt(id,phase){
  // construction; solve the knee instead of stretching the leg.
  knees=solveKnees(hip,ankles);
  const neck=add(shoulderCenter,mul(torsoAxis,.10));
- return {t,arms,root,rotation,hip,neck,knees,ankles,prone:[6,9,15,19].includes(id)};
+ return {t,arms,root,rotation,hip,neck,knees,ankles,prone:[6,9,15,19].includes(id),feet:id===14?'shin':undefined};
 }

@@ -136,3 +136,11 @@ test('dip legs hang under the hips with knees bent and feet behind, clear of the
   athlete.update(14,u);athlete.group.updateMatrixWorld(true);
   const lo=Math.min(...feet.map(i=>world(i).y));assert.ok(lo>=.08,`dip u${u} shoe ${lo.toFixed(3)} above the floor`);}
 });
+
+test('dip feet hang relaxed in line with the shins, toes toward the floor',()=>{
+ for(const u of [0,.25,.5,.75]){athlete.update(14,u);athlete.group.updateMatrixWorld(true);
+  for(const n of ['L','R']){const foot=athlete.map[n+'_Foot'].getWorldQuaternion(new THREE.Quaternion()),shin=athlete.map[n+'_Shin'].getWorldQuaternion(new THREE.Quaternion());
+   const toes=new THREE.Vector3(0,0,1).applyQuaternion(foot);
+   assert.ok(toes.y<-.3,`dip u${u} ${n} toes point ${toes.toArray().map(x=>x.toFixed(2)).join(',')}, not down`);
+   assert.ok(foot.angleTo(shin)<1e-6,`dip u${u} ${n} foot does not follow the shin`);}}
+});

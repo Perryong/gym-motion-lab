@@ -62,7 +62,9 @@ export function applyRigPose(group,map,id,phase){
   // Reverse the shoe facing without changing ankle height or toe contact.
   if(p.prone)qFoot.setFromEuler(new THREE.Euler(1.95,0,0)).premultiply(new THREE.Quaternion().setFromAxisAngle(Y,Math.PI));
   // Body poses: flat on the floor with optional heel pitch, or neutral with the shin.
-  if(p.body)qFoot=p.feet==='shin'?map[n+'_Shin'].getWorldQuaternion(new THREE.Quaternion()).premultiply(space.clone().invert()):new THREE.Quaternion().setFromAxisAngle(X,p.footPitch[i]);
+  // Any pose may let the foot hang relaxed with the shin (e.g. the dip's bent legs).
+  if(p.feet==='shin')qFoot=map[n+'_Shin'].getWorldQuaternion(new THREE.Quaternion()).premultiply(space.clone().invert());
+  else if(p.body)qFoot=new THREE.Quaternion().setFromAxisAngle(X,p.footPitch[i]);
   orient(map[n+'_Foot'],qFoot,space);
   let x=V([1,0,0]),y=V(hand).sub(V(elbow)).normalize();
   const open=(p.prone&&id!==19)||(id===12&&phase%1>=.22&&phase%1<.83),plate=id===10;
