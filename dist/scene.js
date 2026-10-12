@@ -44,7 +44,7 @@ export class Studio {
  makeBar(){const g=new THREE.Group();this.rod(g,[-1.24,0,0],[1.24,0,0],.025,this.materials.chrome);for(const s of [-1,1]){const p=this.mesh(new THREE.CylinderGeometry(.26,.26,.10,40),this.materials.dark,g);p.rotation.z=Math.PI/2;p.position.x=s*1.02;const ring=this.mesh(new THREE.CylinderGeometry(.12,.12,.108,24),this.materials.metal,g);ring.rotation.z=Math.PI/2;ring.position.x=s*1.02;}return g;}
  clearEquipment(){while(this.equipment.children.length){const c=this.equipment.children[0];c.traverse(o=>{if(o.geometry)o.geometry.dispose();});this.equipment.remove(c);}}
  setExercise(id){this.id=id;this.clearEquipment();const e=this.equipment,m=this.materials;
-  this.machineArms=[];this.cables=[];this.rings=[];this.pullBar=null;
+  this.machineArms=[];this.cables=[];this.rings=[];this.dipBars=[];this.pullBar=null;
   const seated=[3,18].includes(id),bench=[0,2,4,5,7,8,13,17].includes(id),inclined=[0,13,17].includes(id);
   if(id===6){this.box(e,[0,.35,-.67],[1.35,.70,.88],m.pad);this.box(e,[0,.717,-.67],[1.38,.034,.91],m.joint);}
   else if([1,9,15,24,26,27,28,29,30].includes(id)){this.box(e,[0,.025,.15],[1.55,.04,3.0],m.shorts);}
@@ -77,7 +77,9 @@ export class Studio {
     this.cables.push({side,line,grip,straps,anchor:[side*1.45,pulleyHeight,-.24]});
    }
   }else if(id===14){
-   for(const side of [-1,1]){for(const z of [-.40,.65]){this.rod(e,[side*.47,.08,z],[side*.47,1.29,z],.044,m.metal);this.rod(e,[side*.75,.08,z],[side*.20,.08,z],.05,m.metal);}this.rod(e,[side*.47,1.29,-.50],[side*.47,1.29,.78],.045,m.dark);}
+   // Bars and posts are seated at each hand's grip in update(), like the pull-up bar.
+   for(const side of [-1,1]){const posts=[-.40,.65].map(z=>{this.rod(e,[side*.75,.08,z],[side*.20,.08,z],.05,m.metal);return {z,rod:this.rod(e,[side*.47,.08,z],[side*.47,1.29,z],.044,m.metal)};});
+    this.dipBars.push({side,posts,bar:this.rod(e,[side*.47,1.29,-.50],[side*.47,1.29,.78],.045,m.dark)});}
   }else if(id===19){
    for(const side of [-1,1]){
     this.rod(e,[side*1.0,.05,-.55],[side*1.,2.80,-.55],.045,m.metal);this.rod(e,[side*1.,.05,-.85],[side*1.,.05,.2],.06,m.metal);
@@ -119,6 +121,7 @@ export class Studio {
   }
   if([10,29].includes(this.id)&&this.plate){this.plate.position.copy(both);if(this.id===29){const chest=this.athlete.map.ShoulderLine.getWorldQuaternion(new THREE.Quaternion());this.plate.quaternion.copy(rootQ).multiply(chest).multiply(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(1,0,0),new THREE.Vector3(0,0,1)));}}
   if(this.pullBar)this.link(this.pullBar,[-1,both.y,both.z],[1,both.y,both.z]);
+  for(const {side,posts,bar} of this.dipBars??[]){const g=palm(side);this.link(bar,[g.x,g.y,-.50],[g.x,g.y,.78]);for(const {z,rod} of posts)this.link(rod,[g.x,.08,z],[g.x,g.y,z]);}
   if(this.id===12&&this.ball){
    const u=phase%1;
    if(u<.22){this.ball.visible=true;this.ball.position.set(0,both.y,both.z+.04);}

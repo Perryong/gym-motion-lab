@@ -69,7 +69,8 @@ export function poseAt(id,phase){
   root=[0,ANKLE_HEIGHT+.26+LEG*.995,0];rotation=0;
   ankles=[-.2,.2].map(x=>planted(x,.04,root,rotation));
   if(id===10)arms=s=>({shoulder:shoulder(s),hand:[s*.07,.47,.25+.53*t],pole:[s,-1,0]});
-  if(id===11||id===16){const angle=-.30+1.67*t;arms=s=>({shoulder:shoulder(s),hand:id===11&&s===-1?[-.43,-.31,.015]:[s*(.35+Math.sin(angle)*.85),.54,.85*Math.cos(angle)],pole:[0,-1,0]});}
+  // Single-arm fly: the free (left) hand rests on the hip with the elbow out, bracing the trunk.
+  if(id===11||id===16){const angle=-.30+1.67*t;arms=s=>id===11&&s===-1?{shoulder:shoulder(s),hand:[-.3,-.12,-.02],pole:[-1,0,-.5]}:{shoulder:shoulder(s),hand:[s*(.35+Math.sin(angle)*.85),.54,.85*Math.cos(angle)],pole:[0,-1,0]};}
   if(id===16){
    // Reference stance: staggered planted feet, soft knees and a small lean.
    root=[0,ANKLE_HEIGHT+.26+LEG*.93,0];ankles=[planted(-.23,.38,root,0),planted(.23,-.34,root,0)];
