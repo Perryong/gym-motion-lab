@@ -131,7 +131,7 @@ export class Studio {
   this.materials.muscle.emissiveIntensity=this.highlight?.12+.15*(1-p.t):0;
  }
  setMuscles(on){this.highlight=on;this.athlete.setMuscles(on,exercises[this.id].group);this.onInvalidate?.();}
- view(view){const focus=poseAt(this.id,0).focus,target=focus??([3,10,11,12,14,16,18,19].includes(this.id)?[0,1.45,.10]:[6,9,15].includes(this.id)?[0,.55,.2]:[0,.83,0]);this.controls.target.set(...target);const offset=view==='front'?[0,1.6,5.3]:view==='side'?[5.3,1.35,.0]:[3.7,2.5,4.0];this.camera.position.copy(v(target).add(v(offset)));this.controls.update();this.onInvalidate?.();}
+ view(view){const focus=poseAt(this.id,0).focus,target=focus??(this.id===14?[0,1.75,.10]:[3,10,11,12,16,18,19].includes(this.id)?[0,1.45,.10]:[6,9,15].includes(this.id)?[0,.55,.2]:[0,.83,0]);this.controls.target.set(...target);const offset=view==='front'?[0,1.6,5.3]:view==='side'?[5.3,1.35,.0]:[3.7,2.5,4.0];this.camera.position.copy(v(target).add(v(offset)));this.controls.update();this.onInvalidate?.();}
  resize(){const w=this.host.clientWidth,h=this.host.clientHeight;if(!w||!h)return;this.camera.aspect=w/h;this.camera.updateProjectionMatrix();this.renderer.setSize(w,h);this.onInvalidate?.();}
  render(){this.controls.update();this.renderer.render(this.scene,this.camera);}
  dispose(){this.observer.disconnect();this.controls.dispose();this.athlete.dispose();const materials=new Set(Object.values(this.materials));this.scene.traverse(o=>{o.geometry?.dispose();if(o.material)for(const m of Array.isArray(o.material)?o.material:[o.material])materials.add(m);});materials.forEach(m=>m.dispose());this.renderer.dispose();this.renderer.domElement.remove();}
