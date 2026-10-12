@@ -86,10 +86,15 @@ export function poseAt(id,phase){
  if(id===18)arms=s=>({shoulder:shoulder(s),hand:[s*.39,.46,.80-.50*t],pole:[s,-.6,0]});
  if(id===14){
   root=[0,0,0];rotation=0;
-  hip=[0,1.33-.30*t,.12];
+  // Bars at a real dip-station height (~1.1 m), high enough for the legs to hang free.
+  const LIFT=.45;
+  hip=[0,1.33+LIFT-.30*t,.12];
   const center=[0,hip[1]+.77,hip[2]+.12];
-  arms=s=>({shoulder:[s*.35,center[1],center[2]],hand:[s*.47,1.29,.12],pole:[s*.12,0,-1]});
-  ankles=[[-.18,hip[1]-.80,.62],[.18,hip[1]-.80,.62]];
+  arms=s=>({shoulder:[s*.35,center[1],center[2]],hand:[s*.47,1.29+LIFT,.12],pole:[s*.12,0,-1]});
+  // Legs hang under the hips (~14° forward) with the knees bent ~90° and the feet
+  // behind. Placed from the final hip, which is recomputed from the shoulders below.
+  const h=sub(center,mul(norm(sub(center,hip)),.8)),a=.25,b=.25,sh=SHIN*.995;
+  ankles=[-1,1].map(s=>add([s*HIP,h[1],h[2]],[0,-THIGH*Math.cos(a)-sh*Math.sin(b),THIGH*Math.sin(a)-sh*Math.cos(b)]));
  }
  // Keep the head close to the shoulders, following the torso in every pose.
  const shoulderCenter=mul(add(arms(-1).shoulder,arms(1).shoulder),.5);

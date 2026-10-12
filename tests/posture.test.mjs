@@ -124,3 +124,15 @@ test('dip bars run through the grip of both hands',async()=>{
    assert.ok(off.length()<.015,`dip u${u} side ${side}: grip ${off.length().toFixed(3)} from the bar axis`);
    assert.ok(Math.abs(axis.z)>.99,'bar runs front to back');}}
 });
+
+test('dip legs hang under the hips with knees bent and feet behind, clear of the floor',()=>{
+ const feet=[];for(let i=0;i<position.count;i++)if(/_(Foot|Toe)/.test(main(i)))feet.push(i);
+ for(const u of [0,.25,.5,.75]){const p=poseAt(14,u);
+  for(const i of [0,1]){const s=i?1:-1,h=[s*HIP,...p.hip.slice(1)],k=p.knees[i],a=p.ankles[i];
+   const thigh=Math.atan2(k[2]-h[2],h[1]-k[1])*180/Math.PI;assert.ok(thigh>=0&&thigh<=30,`dip u${u} thigh ${thigh.toFixed(0)}° forward`);
+   const u1=h.map((x,j)=>x-k[j]),u2=a.map((x,j)=>x-k[j]),knee=Math.acos(u1.reduce((n,x,j)=>n+x*u2[j],0)/Math.hypot(...u1)/Math.hypot(...u2))*180/Math.PI;
+   assert.ok(knee>=80&&knee<=115,`dip u${u} knee ${knee.toFixed(0)}°`);
+   assert.ok(a[2]<k[2],`dip u${u} feet behind the knees`);}
+  athlete.update(14,u);athlete.group.updateMatrixWorld(true);
+  const lo=Math.min(...feet.map(i=>world(i).y));assert.ok(lo>=.08,`dip u${u} shoe ${lo.toFixed(3)} above the floor`);}
+});
