@@ -42,7 +42,7 @@ test('filters by group, 3D and search',()=>{
 
 test('routes keep old links working and send bad exercise ids to the list',()=>{
  const lib=LIBRARY[0].id;
- for(const [hash,want] of [['#abs',['exercises','core']],['#chest',['exercises','chest']],['#legs',['exercises','legs']],['#exercises/back',['exercises','back']],['#exercises/nope',['exercises']],
+ for(const [hash,want] of [['#abs',['exercises','core']],['#chest',['exercises','chest']],['#legs',['exercises','legs']],['#exercises/back',['exercises','back']],['#exercises/abs',['exercises','core']],['#exercises/chest',['exercises','chest']],['#exercises/nope',['exercises']],
   ['#exercise/L9999',['exercises']],['#exercise/Lfoo',['exercises']],['#exercise/4',['exercise',4]],['#exercise/'+lib,['exercise',lib]],
   ['',['home']],['#nonsense',['home']],['#home',['home']],['#stats',['stats']],['#plan',['plan']],['#workout',['workout']],['#exercises',['exercises']]])
   assert.deepEqual(routeFor(hash),want,hash);

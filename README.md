@@ -16,7 +16,7 @@ AnimationMixer controls deterministic clip playback; runtime IK resolves exact g
 
 ## Exercise library
 
-Besides the 30 exercises with 3D motion, `dist/library.js` holds 141 text-only exercises (names, muscles, equipment and English steps). Exercise text from hasaneyldrm/exercises-dataset (MIT), pinned at commit `7455efae41b3` (`data/exercises.json`). The dataset's images and animations (© Gym visual) are not used.
+Besides the 30 exercises with 3D motion, `dist/library.js` holds 137 text-only exercises (names, muscles, equipment and English steps). Exercise text from hasaneyldrm/exercises-dataset (MIT), pinned at commit `7455efae41b3` (`data/exercises.json`). The dataset's licence ships as `dist/LIBRARY-LICENSE.txt`. The dataset's images and animations (© Gym visual) are not used.
 
 To regenerate after editing `scripts/library-ids.json` (`include` lists dataset ids; `duplicates` maps dataset ids of the 3D movements to their 3D id so they are not added twice):
 

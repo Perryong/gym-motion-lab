@@ -56,3 +56,18 @@ test('the generated library follows the spec',async()=>{
  const shorts=LIBRARY.map(e=>e.short),clash=shorts.filter((s,i)=>shorts.indexOf(s)!==i);
  assert.deepEqual(clash,[],'short names must tell exercises apart');
 });
+
+test('reviewed near-duplicate variants stay out of the library',async()=>{
+ const {LIBRARY}=await import('../dist/library.js'),ids=new Set(LIBRARY.map(e=>e.id));
+ // Same movement as a kept entry: rear delt raise / reverse fly ≈ rear fly; skull crusher = lying triceps extension; triceps dip = bench dip.
+ for(const dropped of ['L2292','L0383','L0060','L0814'])assert.ok(!ids.has(dropped),`${dropped} duplicates a kept exercise`);
+ for(const kept of ['L0378','L0061','L0129'])assert.ok(ids.has(kept),`${kept} kept`);
+});
+
+test('the dataset licence ships with the library',async()=>{
+ const text=await readFile(new URL('../dist/LIBRARY-LICENSE.txt',import.meta.url),'utf8');
+ assert.match(text,/MIT License/);assert.match(text,/Copyright \(c\) 2026 Hasan Emir Y/);assert.match(text,/7455efae41b3/);
+ const header=(await readFile(new URL('../dist/library.js',import.meta.url),'utf8')).split('\n').slice(0,3).join('\n');
+ assert.match(header,/LIBRARY-LICENSE\.txt/);
+ assert.match(await readFile(new URL('../README.md',import.meta.url),'utf8'),/LIBRARY-LICENSE\.txt/);
+});

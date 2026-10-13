@@ -28,7 +28,7 @@ const isGroupKey=g=>GROUPS.some(x=>x.key===g);
 export function routeFor(hash){
  const [view,arg]=String(hash??'').replace(/^#/,'').split('/');
  if(Object.hasOwn(LEGACY,view))return ['exercises',LEGACY[view]];
- if(view==='exercises')return isGroupKey(arg)?['exercises',arg]:['exercises'];
+ if(view==='exercises'){const g=LEGACY[arg]??arg;return isGroupKey(g)?['exercises',g]:['exercises'];}
  if(view==='exercise'){const id=parseExerciseId(arg);return id===null?['exercises']:['exercise',id];}
  return VIEWS.includes(view)?[view]:['home'];
 }

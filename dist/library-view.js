@@ -10,7 +10,8 @@ export function initLibrary(plan){
 export function renderLibrary(nextGroup){
  group=Object.hasOwn(LABEL,nextGroup)?nextGroup:'all';
  $('group-chips').replaceChildren(...['all',...GROUPS.map(g=>g.key)].map(g=>el('a',{href:g==='all'?'#exercises':'#exercises/'+g,class:'chip','aria-current':g===group?'true':false},g==='all'?'All':LABEL[g])),
-  el('button',{class:'chip chip-toggle','aria-pressed':String(only3d),onclick:()=>{only3d=!only3d;renderLibrary(group);}},'In 3D'));
+  // Re-render only the rows so the pressed button (and keyboard focus) stays put.
+  el('button',{class:'chip chip-toggle','aria-pressed':String(only3d),onclick:e=>{only3d=!only3d;e.currentTarget.setAttribute('aria-pressed',String(only3d));renderRows();}},'In 3D'));
  renderRows();
 }
 function renderRows(){
