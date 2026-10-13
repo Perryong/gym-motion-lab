@@ -1,4 +1,4 @@
-import {allIds} from './exercises.js';
+import {isExerciseId} from './catalog.js';
 export const DAYS=['mon','tue','wed','thu','fri','sat','sun'];
 export const DAY_NAMES={mon:'Monday',tue:'Tuesday',wed:'Wednesday',thu:'Thursday',fri:'Friday',sat:'Saturday',sun:'Sunday'};
 export const REST_SECONDS=90;
@@ -6,7 +6,7 @@ const KEY='gml.v1';
 export const dayKey=(date=new Date())=>DAYS[(date.getDay()+6)%7];
 const count=(n,fallback,max)=>Number.isInteger(n)&&n>0&&n<=max?n:fallback;
 const kg=n=>typeof n==='number'&&Number.isFinite(n)&&n>=0?n:null;
-const valid=id=>allIds.includes(id);
+const valid=isExerciseId;
 const cleanSets=sets=>Array.isArray(sets)?sets.map(s=>({kg:kg(s?.kg),reps:count(s?.reps,0,999),done:s?.done===true})):[];
 const bodyKg=n=>typeof n==='number'&&n>=20&&n<=400?Math.round(n*10)/10:null;
 const isDate=d=>typeof d==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(d)&&!Number.isNaN(Date.parse(d));
