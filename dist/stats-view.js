@@ -1,4 +1,4 @@
-import {GROUP_META} from './exercises.js';
+import {GROUPS} from './catalog.js';
 import {weekStreak,monthCount,weightChange,heatmap,muscleSets,goalTrend} from './stats.js';
 import {heatmapSvg,bodyFigure} from './charts.js';
 import {$,el} from './ui.js';
@@ -18,5 +18,5 @@ function renderMuscles(state){
  $('range-buttons').replaceChildren(...RANGES.map(([label,days])=>el('button',{'aria-pressed':String(days===range),onclick:()=>{range=days;renderMuscles(state);}},label)));
  const sets=muscleSets(state.history,Date.now(),range);
  $('body-map').innerHTML=bodyFigure(sets);
- $('muscle-list').replaceChildren(...Object.entries(sets).map(([g,n])=>el('li',{},el('span',{},GROUP_META[g].title),el('b',{},`${n} set${n===1?'':'s'}`))));
+ $('muscle-list').replaceChildren(...GROUPS.map(({key:g,label})=>[g,sets[g],label]).map(([g,n,label])=>el('li',{},el('span',{},label),el('b',{},`${n} set${n===1?'':'s'}`))));
 }
