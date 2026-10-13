@@ -53,3 +53,12 @@ export function setGoal(state,value){
  const kg=bodyKg(value);if(kg===null)throw new Error('Enter a goal between 20 and 400 kg.');
  state.goal=kg;return state;
 }
+// Backup files: a marker and version around the state. Restoring runs the same
+// validation as stored data, so a hand-edited or damaged file cannot break the app.
+const BACKUP_APP='form-gym',BACKUP_VERSION=1;
+export const exportBackup=(state,now=Date.now())=>JSON.stringify({app:BACKUP_APP,version:BACKUP_VERSION,exported:new Date(now).toISOString(),data:state},null,1);
+export function readBackup(text){
+ let file;try{file=JSON.parse(text);}catch{file=null;}
+ if(!file||file.app!==BACKUP_APP||file.version!==BACKUP_VERSION||typeof file.data!=='object'||!file.data)throw new Error('That file is not a FORM backup.');
+ return normalize(JSON.stringify(file.data));
+}

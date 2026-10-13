@@ -1,5 +1,6 @@
 import {exercises,allIds} from './exercises.js';
-import {DAYS,DAY_NAMES,dayKey,load,save,addToPlan} from './store.js';
+import {DAYS,DAY_NAMES,dayKey,load,save,addToPlan,exportBackup,readBackup} from './store.js';
+import {localDate} from './stats.js';
 import {selectExercise,attachViewer} from './studio-view.js';
 import {initLibrary,renderLibrary,isGroup} from './library-view.js';
 import {renderPlan} from './plan-view.js';
@@ -40,4 +41,18 @@ function route(){
  current=view;
 }
 initLibrary(pickDay);
+$('export-data').onclick=()=>{
+ const a=el('a',{href:URL.createObjectURL(new Blob([exportBackup(state)],{type:'application/json'})),download:`form-backup-${localDate(Date.now())}.json`});
+ a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('Backup downloaded');
+};
+$('import-data-button').onclick=()=>$('import-data').click();
+$('import-data').onchange=async e=>{
+ const file=e.target.files[0];e.target.value='';if(!file)return;
+ if(file.size>5e6){toast('That file is too large to be a FORM backup.');return;}
+ try{
+  const next=readBackup(await file.text()),n=next.history.length,w=next.weights.length;
+  if(!confirm(`Replace your data with this backup? ${n} workout${n===1?'':'s'}, ${w} weigh-in${w===1?'':'s'}.`))return;
+  Object.assign(state,next);commit();route();toast('Backup restored');
+ }catch(error){toast(error.message);}
+};
 addEventListener('hashchange',route);route();

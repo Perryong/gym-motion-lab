@@ -145,3 +145,6 @@ a.pill{text-decoration:none}
 .cal-day i.done{background:var(--lime)}.cal-day i.planned{box-shadow:inset 0 0 0 1.5px var(--warn)}
 .day-detail{display:flex;flex-direction:column;gap:2px;margin:8px 0 14px;padding:10px 14px;background:var(--card-2);border-radius:12px;font-size:15px}
 .day-detail small{color:var(--muted);font-size:12px;letter-spacing:.5px}
+
+/* Backup and restore */
+.data-note{font-size:14px;margin:0 0 12px}.data-actions{display:flex;gap:10px;flex-wrap:wrap}
