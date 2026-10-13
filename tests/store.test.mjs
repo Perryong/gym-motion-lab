@@ -67,3 +67,19 @@ test('stored weights are validated and deduplicated',()=>{
  assert.deepEqual(s.weights,[{date:'2026-09-30',kg:81},{date:'2026-10-02',kg:79.5}]);
  assert.equal(s.goal,null);
 });
+
+test('a backup round-trips the whole state',async()=>{
+ const {exportBackup,readBackup,logWeight}=await import('../dist/store.js');
+ const s=normalize(null);addToPlan(s,'mon',4);s.plan.mon.name='Push';logWeight(s,'2026-10-01',80);s.goal=77;
+ s.history.push({day:'mon',name:'Push',started:1,finished:2,entries:[{id:4,sets:[{kg:60,reps:10,done:true}]}]});
+ const text=exportBackup(s,Date.UTC(2026,9,13));
+ const file=JSON.parse(text);assert.equal(file.app,'form-gym');assert.equal(file.version,1);assert.equal(file.exported,'2026-10-13T00:00:00.000Z');
+ assert.deepEqual(readBackup(text),s);
+});
+
+test('restoring rejects files that are not FORM backups and cleans bad data',async()=>{
+ const {readBackup}=await import('../dist/store.js');
+ for(const bad of ['','not json','{}',JSON.stringify({app:'other',version:1,data:{}}),JSON.stringify({app:'form-gym',version:2,data:{}})])assert.throws(()=>readBackup(bad),/backup/i);
+ const s=readBackup(JSON.stringify({app:'form-gym',version:1,data:{plan:{mon:{items:[{id:999},{id:4}]}},weights:[{date:'nope',kg:70}]}}));
+ assert.deepEqual(s.plan.mon.items.map(i=>i.id),[4]);assert.deepEqual(s.weights,[]);
+});
