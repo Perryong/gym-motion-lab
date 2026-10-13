@@ -7,6 +7,7 @@ import {renderPlan} from './plan-view.js';
 import {renderWorkout} from './workout-view.js';
 import {renderHome} from './home-view.js';
 import {renderStats} from './stats-view.js';
+import {renderTextExercise} from './text-exercise-view.js';
 import {$,el,toast} from './ui.js';
 const state=load();
 let warned=false,back='#home',current=null;
@@ -23,10 +24,13 @@ function route(){
  const [view,arg]=routeFor(location.hash);
  if(view!=='exercise')back=location.hash||'#home';
  const tab=view==='exercise'?routeFor(back)[0]:view;
- for(const v of VIEWS)$('view-'+v).hidden=v!==view;
+ const shown=view==='exercise'&&!exerciseById(arg).has3d?'text-exercise':view;
+ for(const v of [...VIEWS,'text-exercise'])$('view-'+v).hidden=v!==shown;
  document.querySelectorAll('[data-tab]').forEach(a=>a.dataset.tab===tab?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current'));
  if(view==='exercises')renderLibrary(arg);
- if(view==='exercise'){const id=arg;$('detail-back').href=back;$('detail-back').textContent='‹ '+({home:'Home',stats:'Stats',plan:'Plan',workout:'Workout'}[tab]??'Exercises');$('detail-plan').onclick=()=>pickDay(id);showInSlot(id,$('viewer-home'));}
+ const backLabel={home:'Home',stats:'Stats',plan:'Plan',workout:'Workout'}[tab]??'Exercises';
+ if(shown==='exercise'){const id=arg;$('detail-back').href=back;$('detail-back').textContent='‹ '+backLabel;$('detail-plan').onclick=()=>pickDay(id);showInSlot(id,$('viewer-home'));}
+ if(shown==='text-exercise')renderTextExercise(arg,{back,backLabel,onPlan:pickDay});
  if(view==='home')renderHome(state,commit);
  if(view==='stats')renderStats(state);
  if(view==='plan')renderPlan(state,commit);
