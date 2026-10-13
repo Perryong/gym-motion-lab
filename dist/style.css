@@ -36,7 +36,7 @@ a{color:inherit}
 .row-main{display:flex;align-items:center;gap:14px;flex:1;min-width:0;text-decoration:none}
 .row-main strong{display:block;font-weight:500;font-size:17px}.row-main small{display:block;color:var(--muted);font-size:13px}
 .thumb{flex:0 0 52px;height:52px;border-radius:12px;display:grid;place-items:center;font-family:'Barlow Condensed',Impact,sans-serif;font-size:26px;font-weight:700;color:#122008}
-.thumb-chest{background:var(--lime)}.thumb-legs{background:#7fd6ff}.thumb-abs{background:#ffc75a}
+.thumb-chest{background:var(--lime)}.thumb-legs{background:#7fd6ff}.thumb-core{background:#ffc75a}.thumb-back{background:#c49bff}.thumb-shoulders{background:#ff9f7f}.thumb-arms{background:#7fe0c4}
 .empty{color:var(--muted);text-align:center;padding:30px 0}
 .days{display:flex;flex-direction:column;gap:12px}
 .day-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
@@ -148,3 +148,7 @@ a.pill{text-decoration:none}
 
 /* Backup and restore */
 .data-note{font-size:14px;margin:0 0 12px}.data-actions{display:flex;gap:10px;flex-wrap:wrap}
+
+/* Six-group library */
+.chip-toggle{border:1px solid var(--line);color:var(--text);cursor:pointer;font:inherit}.chip-toggle[aria-pressed=true]{background:var(--lime);color:#122008;border-color:var(--lime);font-weight:600}
+.badge-3d{display:inline-block;margin-left:8px;padding:1px 6px;border-radius:6px;background:#1f3a1a;color:var(--lime);font-size:11px;font-weight:700;vertical-align:2px}

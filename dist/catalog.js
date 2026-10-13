@@ -21,3 +21,14 @@ export function filterExercises({group='all',query='',only3d=false}={}){
  return catalogIds.filter(id=>{const e=byId.get(id);
   return (group==='all'||e.group===group)&&(!only3d||e.has3d)&&(!q||[e.name,e.target,e.equipment,...e.secondary].join(' ').toLowerCase().includes(q));});
 }
+// Hash → [view, arg]. Old #chest/#legs/#abs links open that group's list; an unknown
+// exercise id opens the list instead of an empty page.
+const VIEWS=['home','stats','exercises','exercise','plan','workout'],LEGACY={chest:'chest',legs:'legs',abs:'core'};
+const isGroupKey=g=>GROUPS.some(x=>x.key===g);
+export function routeFor(hash){
+ const [view,arg]=String(hash??'').replace(/^#/,'').split('/');
+ if(Object.hasOwn(LEGACY,view))return ['exercises',LEGACY[view]];
+ if(view==='exercises')return isGroupKey(arg)?['exercises',arg]:['exercises'];
+ if(view==='exercise'){const id=parseExerciseId(arg);return id===null?['exercises']:['exercise',id];}
+ return VIEWS.includes(view)?[view]:['home'];
+}

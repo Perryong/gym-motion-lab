@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {GROUPS,catalogIds,exerciseById,isExerciseId,parseExerciseId,filterExercises} from '../dist/catalog.js';
+import {GROUPS,catalogIds,exerciseById,isExerciseId,parseExerciseId,filterExercises,routeFor} from '../dist/catalog.js';
 import {LIBRARY} from '../dist/library.js';
 
 test('six groups in display order',()=>{
@@ -38,4 +38,12 @@ test('filters by group, 3D and search',()=>{
  assert.ok(filterExercises({query:muscle}).includes(lib.id),`search "${muscle}" finds ${lib.id}`);
  assert.ok(filterExercises({group:'back',only3d:true}).length===0,'no 3D back exercises yet');
  assert.equal(filterExercises({}).length,catalogIds.length);
+});
+
+test('routes keep old links working and send bad exercise ids to the list',()=>{
+ const lib=LIBRARY[0].id;
+ for(const [hash,want] of [['#abs',['exercises','core']],['#chest',['exercises','chest']],['#legs',['exercises','legs']],['#exercises/back',['exercises','back']],['#exercises/nope',['exercises']],
+  ['#exercise/L9999',['exercises']],['#exercise/Lfoo',['exercises']],['#exercise/4',['exercise',4]],['#exercise/'+lib,['exercise',lib]],
+  ['',['home']],['#nonsense',['home']],['#home',['home']],['#stats',['stats']],['#plan',['plan']],['#workout',['workout']],['#exercises',['exercises']]])
+  assert.deepEqual(routeFor(hash),want,hash);
 });
