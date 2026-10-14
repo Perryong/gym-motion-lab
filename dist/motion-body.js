@@ -1,7 +1,7 @@
 // Lower-body and core poses. Unlike chest poses (which derive the trunk from
 // the shoulders), these set hip, pelvis pitch and spine bends, then derive the
 // shoulders by forward kinematics through the rig's bone offsets.
-import {THIGH,SHIN,HIP,LEG,ANKLE_HEIGHT,cycleT,solveKnees} from './motion.js';
+import {THIGH,SHIN,HIP,LEG,ANKLE_HEIGHT,cycleT,solveKnees,solveArm,GRIP} from './motion.js';
 const add=(a,b)=>a.map((v,i)=>v+b[i]),sub=(a,b)=>a.map((v,i)=>v-b[i]),mul=(a,s)=>a.map(v=>v*s);
 const R={x:a=>[[1,0,0],[0,Math.cos(a),-Math.sin(a)],[0,Math.sin(a),Math.cos(a)]],y:a=>[[Math.cos(a),0,Math.sin(a)],[0,1,0],[-Math.sin(a),0,Math.cos(a)]],z:a=>[[Math.cos(a),-Math.sin(a),0],[Math.sin(a),Math.cos(a),0],[0,0,1]]};
 const mm=(A,B)=>A.map(r=>B[0].map((_,j)=>r.reduce((n,v,k)=>n+v*B[k][j],0))),mv=(A,v)=>A.map(r=>r.reduce((n,x,k)=>n+x*v[k],0));
@@ -14,6 +14,9 @@ export const stand=()=>ANKLE_HEIGHT+LEG*.995,MAT=.045,BACK=.185;
 // trunk tilts head-down slightly and the head, shoulder blades and seat all touch the mat.
 // Seated cable row: bench top height, shared with scene.js.
 export const ROW_SEAT=.45;
+// Footplate face (where the soles press) and its two pads, one per foot, leaving a gap
+// at x=0 for the cable. Measured from the shoe with the soles turned to face the plate.
+export const ROW_PLATE_Z=1.38,ROW_PADS=[-1,1].map(s=>({x:s*.155,w:.25,y0:.4,y1:.97}));
 const SEAT=BACK+.049,SUPINE=-Math.PI/2-Math.asin(.049/.8);
 // How far the shoe's toe tip (0,-.18,.36 from the ankle) sits below the ankle at a heel pitch.
 const toeDepth=a=>.18*Math.cos(a)+.36*Math.sin(a);
@@ -114,13 +117,20 @@ export const BODY_IDS={
   return pose({t,hip,pitch,spine,feet:'shin',focus:[0,1.9,0],
    ankles:[-1,1].map(s=>{const k=add([s*HIP,hip[1],hip[2]],[0,-THIGH*Math.cos(a),THIGH*Math.sin(a)]);return add(k,[0,-SHIN*.995,SHIN*.05]);}),
    hands:s=>({at:[s*.46,BAR,0],pole:[s,0,0],palm:[0,0,1],fingers:'grip'})});},
- // Pull-up: hands fixed on the bar; the elbows bend to lift the shoulders from a
- // near-straight dead hang until the chin clears the bar. Legs hang straight below the hips.
- // BAR is the bar (grip) height: with the arms overhead the grip sits .174 above the wrist.
- 32:u=>{const t=cycleT(u,.45),BAR=3.6,WRIST=BAR-.174,shoulderY=WRIST-.86+.984*t,pitch=-.08*t,spine={Chest:[-.1*t]},hip=hipFor([0,shoulderY,-.03],pitch,spine);
+ // Pull-up: hands fixed on the bar. The elbows bend to lift the shoulders from a
+ // near-straight dead hang to just below the bar, where the chin (.21 above the
+ // shoulder line) clears it. The body leans back as it rises so the face passes behind
+ // the bar. BAR is the grip height; with the arms overhead the wrist sits .174 below it.
+ 32:u=>{const t=cycleT(u,.45),BAR=3.6,WRIST=BAR-.174,shoulderY=WRIST-.855+(.855-.016)*t,z=-.1-.22*Math.min(1,1.8*t),pitch=-.12*t,spine={Chest:[-.1*t]},hip=hipFor([0,shoulderY,z],pitch,spine);
   return pose({t,hip,pitch,spine,feet:'shin',focus:[0,2.5,0],
    ankles:[-1,1].map(s=>[s*HIP,hip[1]-LEG*.995,hip[2]+.02]),
-   hands:s=>({at:[s*.52,WRIST,0],pole:[s,-.6,.2],palm:[0,0,1],fingers:'grip'})});},
+   hands:(s,T)=>{const pole=[s,-1,.1],palm=[0,0,1],grip=[s*.52,BAR,0];
+    // Fingers follow the forearm, so back the wrist off the bar by the grip offset along the
+    // solved forearm until the grip point (not the wrist) sits on the bar.
+    let at=sub(grip,[0,GRIP[1],GRIP[2]]);
+    for(let k=0;k<6;k++){const e=solveArm(T.shoulder(s),at,pole),f=sub(at,e),fl=Math.hypot(...f),y=mul(f,1/fl),p=sub(palm,mul(y,y[2])),pl=Math.hypot(...p);
+     at=sub(sub(grip,mul(y,GRIP[1])),mul(p,GRIP[2]/pl));}
+    return {at,pole,palm,fingers:'grip'};}});},
  // Barbell bent-over row: a fixed hinge 45° from horizontal with soft knees; the bar
  // travels from arm's length under the shoulders to the lower ribs, elbows up and back.
  // Hips sit back so the shoulders, and the hanging bar, stack over the middle of the foot.
@@ -131,10 +141,11 @@ export const BODY_IDS={
    hands:(s,T)=>{const sh=T.shoulder(s);return {at:lerp([s*.26,sh[1]-.865,sh[2]+.05],[s*.26,ribs[1],ribs[2]]),pole:[s*.5,.4,-1],palm:[0,0,-1],fingers:'grip'};}});},
  // Seated cable row: seated on the bench, feet braced on a footplate, knees soft; the
  // handle travels from arm's length toward the low pulley to the stomach.
- 34:u=>{const t=cycleT(u,.45),hip=[0,ROW_SEAT+.131,0],pitch=.2*(1-t),T=trunk(hip,pitch);
+ 34:u=>{const t=cycleT(u,.45),hip=[0,ROW_SEAT+.135-.018*t,0],pitch=.2*(1-t),T=trunk(hip,pitch);
   const belly=T.at([0,-.42,.16]),lerp=(a,b)=>a.map((x,i)=>x+(b[i]-x)*t);
-  return pose({t,hip,pitch,focus:[0,.9,.5],footPitch:[-1.2,-1.2],
-   ankles:[-1,1].map(s=>[s*HIP,.36,1.18]),
+  // knee pole up: the default (trunk forward) is nearly parallel to hip→ankle here and flips.
+  return pose({t,hip,pitch,knee:[0,1,0],focus:[0,.9,.5],footPitch:[-Math.PI/2,-Math.PI/2],
+   ankles:[-1,1].map(s=>[s*HIP,.55,1.18]),
    hands:(s,T)=>{const sh=T.shoulder(s);return {at:lerp([s*.12,sh[1]-.28,sh[2]+.78],[s*.12,belly[1],belly[2]]),pole:[s*.4,-.2,-1],palm:[-s,0,0],fingers:'grip'};}});}
 };
 export function bodyPose(id,u){const make=BODY_IDS[id];if(!make)throw new Error('No body pose for '+id);return make(((u%1)+1)%1);}

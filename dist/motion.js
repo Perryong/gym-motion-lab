@@ -15,6 +15,9 @@ export function solveKnees(hip,ankles,pole=[0,0,1]){
   return add(add(origin,mul(axis,along)),mul(bend,Math.sqrt(Math.max(0,THIGH*THIGH-along*along))));
  });
 }
+// Handle centre inside the curled fingers, in hand-bone space (fingers +Y,
+// palm +Z); fitted to the athlete's finger joints at gripping curl.
+export const GRIP=[0,.174,.056];
 export function solveArm(shoulder,hand,pole,length=.44){
  const delta=sub(hand,shoulder),d=Math.hypot(...delta),axis=norm(delta);
  const projected=sub(pole,mul(axis,dot(pole,axis))); const bend=norm(projected);

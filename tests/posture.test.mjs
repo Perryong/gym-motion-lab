@@ -198,9 +198,24 @@ test('pull-up hangs from the bar with both hands gripping it',async()=>{
   const p=poseAt(32,u);for(const i of [0,1])assert.ok(Math.abs(p.ankles[i][2]-p.hip[2])<.2,`u${u} legs hang below the hips`);
  }
  const a0=elbow(32,0,1);assert.ok(angle(a0.shoulder,a0.elbow,a0.hand)>=160,'dead hang with straight arms');
- s.update(.5);s.scene.updateMatrixWorld(true);
- const chin=s.athlete.map.Head.getWorldPosition(new THREE.Vector3()).y-.08,barY=s.pullBar.getWorldPosition(new THREE.Vector3()).y;
- assert.ok(chin>=barY,`chin ${chin.toFixed(3)} below bar ${barY.toFixed(3)} at the top`);
+});
+
+test('pull-up keeps the bar fixed, elbows below the hands and the head clear of the bar',async()=>{
+ const s=await studio();s.setExercise(32);
+ // Real chin: the lowest front vertex of the head in the standing bind pose.
+ athlete.update(20,0);athlete.group.updateMatrixWorld(true);
+ const hv=region.head.map(i=>[i,world(i)]),front=Math.max(...hv.map(([,v])=>v.z)),chinIdx=hv.filter(([,v])=>v.z>front-.07).reduce((a,b)=>b[1].y<a[1].y?b:a)[0];
+ const sm=s.athlete.mesh,sv=i=>sm.getVertexPosition(i,new THREE.Vector3()).applyMatrix4(sm.matrixWorld);
+ const upper=[...region.head,...region.back];
+ for(let f=0;f<=40;f++){const u=f/40;s.update(u);s.scene.updateMatrixWorld(true);
+  const bar=s.pullBar.getWorldPosition(new THREE.Vector3());
+  assert.ok(Math.abs(bar.y-3.6)<.01,`u${u} bar at ${bar.y.toFixed(3)}, should stay at 3.6`);
+  for(const side of [-1,1]){const a=elbow(32,u,side);assert.ok(a.elbow[1]<a.hand[1],`u${u} elbow above the hand`);}
+  let near=Infinity;for(const i of upper){const v=sv(i);near=Math.min(near,Math.hypot(v.y-bar.y,v.z-bar.z));}
+  assert.ok(near>=.025,`u${u} head or torso ${near.toFixed(3)} from the bar axis (inside the bar)`);
+ }
+ s.update(.45);s.scene.updateMatrixWorld(true);
+ const chin=sv(chinIdx).y;assert.ok(chin>=3.6,`chin ${chin.toFixed(3)} below the bar at the top`);
 });
 
 test('bent-over row hinges with a flat back and rows the bar to the ribs',async()=>{
@@ -251,4 +266,22 @@ test('seated cable row sits upright, feet braced, handle in both hands',async()=
  const {trunk}=await import('../dist/motion-body.js'),p5=poseAt(34,.5),T=trunk(p5.hip,p5.pitch,p5.spine),belly=T.at([0,-.42,.16]),top=p5.arms(1).hand.map((x,i)=>(x+p5.arms(-1).hand[i])/2);
  assert.ok(Math.hypot(...top.map((x,i)=>x-belly[i]))<=.12,'handle reaches the stomach');
  const e5=elbow(34,.5,1),fwd=T.dir([0,0,1]);assert.ok(e5.elbow.map((x,i)=>x-e5.shoulder[i]).reduce((n,x,i)=>n+x*fwd[i],0)<0,'elbows drive behind the torso');
+});
+
+test('seated cable row knees stay up, nothing passes through the bench, footplate or cable path',async()=>{
+ const {ROW_SEAT,ROW_PLATE_Z,ROW_PADS}=await import('../dist/motion-body.js'),s=await studio();s.setExercise(34);
+ const sm=s.athlete.mesh,pos=sm.geometry.attributes.position,sv=i=>sm.getVertexPosition(i,new THREE.Vector3()).applyMatrix4(sm.matrixWorld);
+ const si=sm.geometry.attributes.skinIndex,sw=sm.geometry.attributes.skinWeight,boneOf=i=>{let b=0,w=-1;for(let k=0;k<4;k++){const x=sw.getComponent(i,k);if(x>w){w=x;b=si.getComponent(i,k);}}return sm.skeleton.bones[b].name;};
+ const shoe=[],all=[];for(let i=0;i<pos.count;i++){if(/_Foot$/.test(boneOf(i)))shoe.push(i);if(i%3===0)all.push(i);}
+ for(let f=0;f<=40;f++){const u=f/40,p=poseAt(34,u);s.update(u);s.scene.updateMatrixWorld(true);
+  for(const i of [0,1]){const h=[(i?1:-1)*HIP,...p.hip.slice(1)],a=p.ankles[i],k=p.knees[i],t=(k[2]-h[2])/(a[2]-h[2]),lineY=h[1]+t*(a[1]-h[1]);
+   assert.ok(k[1]>lineY,`u${u} knee ${i} below the hip-ankle line (bending down through the bench)`);}
+  let inBench=0;for(const i of all){const v=sv(i);if(Math.abs(v.x)<.25&&v.z>-.6&&v.z<.5&&v.y<ROW_SEAT-.012)inBench++;}
+  assert.equal(inBench,0,`u${u} ${inBench} skin points inside the bench`);
+  const sz=shoe.map(i=>sv(i).z),front=Math.max(...sz);
+  assert.ok(front<=ROW_PLATE_Z+.012,`u${u} shoe ${(front-ROW_PLATE_Z).toFixed(3)} through the footplate`);
+  assert.ok(front>=ROW_PLATE_Z-.02,`u${u} shoe ${(ROW_PLATE_Z-front).toFixed(3)} short of the footplate`);
+  const [c0,c1]=(m=>{const c=m.getWorldPosition(new THREE.Vector3()),ax=new THREE.Vector3(0,1,0).applyQuaternion(m.getWorldQuaternion(new THREE.Quaternion())).multiplyScalar(m.scale.y/2);return [c.clone().sub(ax),c.clone().add(ax)];})(s.rowCable.line);
+  for(let k=0;k<=50;k++){const q=c0.clone().lerp(c1,k/50);for(const pad of ROW_PADS){const inside=Math.abs(q.x-pad.x)<pad.w/2&&q.y>pad.y0&&q.y<pad.y1&&q.z>ROW_PLATE_Z-.005&&q.z<ROW_PLATE_Z+.055;assert.ok(!inside,`u${u} cable passes through the footplate`);}}
+ }
 });

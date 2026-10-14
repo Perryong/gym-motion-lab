@@ -1,13 +1,12 @@
 import * as THREE from 'three';
 import {OrbitControls} from './vendor/OrbitControls.js';
-import {poseAt} from './motion.js';
-import {ROW_SEAT} from './motion-body.js';
+import {poseAt,GRIP} from './motion.js';
+import {ROW_SEAT,ROW_PLATE_Z,ROW_PADS} from './motion-body.js';
 import {Athlete} from './athlete.js';
 import {exercises} from './exercises.js';
 const v=a=>new THREE.Vector3(...a),Y=new THREE.Vector3(0,1,0);
-// Handle centre inside the curled fingers, in hand-bone space (fingers +Y,
-// palm +Z); fitted to the athlete's finger joints at gripping curl.
-export const GRIP=[0,.174,.056];
+// GRIP (handle centre in hand-bone space) lives in motion.js so poses can seat grips too.
+export {GRIP};
 export class Studio {
  constructor(host,asset){
   this.host=host;this.id=0;this.phase=0;this.highlight=false;
@@ -95,7 +94,7 @@ export class Studio {
   if(id===25)this.box(e,[0,.075,.26],[.9,.15,.5],m.pad);
   if(id===34){
    // Seated row: bench, vertical footplate, and a low pulley on a column in front.
-   this.box(e,[0,ROW_SEAT/2,-.05],[.5,ROW_SEAT,1.1],m.pad);this.box(e,[0,.36,1.36],[.7,.5,.05],m.joint);
+   this.box(e,[0,ROW_SEAT/2,-.05],[.5,ROW_SEAT,1.1],m.pad);for(const p of ROW_PADS)this.box(e,[p.x,(p.y0+p.y1)/2,ROW_PLATE_Z+.025],[p.w,p.y1-p.y0,.05],m.joint);
    this.box(e,[0,.75,1.78],[.42,1.5,.16],m.dark);const anchor=[0,.42,1.62];
    const pulley=this.mesh(new THREE.TorusGeometry(.08,.016,10,24),m.metal,e);pulley.position.set(...anchor);pulley.rotation.y=Math.PI/2;
    this.rowCable={anchor,handle:this.rod(e,[-.1,0,0],[.1,0,0],.02,m.dark),line:this.mesh(new THREE.CylinderGeometry(.008,.008,1,8),m.chrome,e)};
