@@ -12,6 +12,8 @@ const euler=([flex=0,side=0,twist=0]=[])=>mm(mm(R.y(twist),R.x(flex)),R.z(side))
 export const stand=()=>ANKLE_HEIGHT+LEG*.995,MAT=.045,BACK=.185;
 // Lying on the back: the seat sits higher than the shoulder line (BACK), so the
 // trunk tilts head-down slightly and the head, shoulder blades and seat all touch the mat.
+// Seated cable row: bench top height, shared with scene.js.
+export const ROW_SEAT=.45;
 const SEAT=BACK+.049,SUPINE=-Math.PI/2-Math.asin(.049/.8);
 // How far the shoe's toe tip (0,-.18,.36 from the ankle) sits below the ankle at a heel pitch.
 const toeDepth=a=>.18*Math.cos(a)+.36*Math.sin(a);
@@ -126,6 +128,13 @@ export const BODY_IDS={
   const ribs=T.at([0,-.17,.12]),lerp=(a,b)=>a.map((x,i)=>x+(b[i]-x)*t);
   return pose({t,hip,pitch,focus:[0,1.0,0],
    ankles:[[-.14,ANKLE_HEIGHT,0],[.14,ANKLE_HEIGHT,0]],
-   hands:(s,T)=>{const sh=T.shoulder(s);return {at:lerp([s*.26,sh[1]-.865,sh[2]+.05],[s*.26,ribs[1],ribs[2]]),pole:[s*.5,.4,-1],palm:[0,0,-1],fingers:'grip'};}});}
+   hands:(s,T)=>{const sh=T.shoulder(s);return {at:lerp([s*.26,sh[1]-.865,sh[2]+.05],[s*.26,ribs[1],ribs[2]]),pole:[s*.5,.4,-1],palm:[0,0,-1],fingers:'grip'};}});},
+ // Seated cable row: seated on the bench, feet braced on a footplate, knees soft; the
+ // handle travels from arm's length toward the low pulley to the stomach.
+ 34:u=>{const t=cycleT(u,.45),hip=[0,ROW_SEAT+.131,0],pitch=.2*(1-t),T=trunk(hip,pitch);
+  const belly=T.at([0,-.42,.16]),lerp=(a,b)=>a.map((x,i)=>x+(b[i]-x)*t);
+  return pose({t,hip,pitch,focus:[0,.9,.5],footPitch:[-1.2,-1.2],
+   ankles:[-1,1].map(s=>[s*HIP,.36,1.18]),
+   hands:(s,T)=>{const sh=T.shoulder(s);return {at:lerp([s*.12,sh[1]-.28,sh[2]+.78],[s*.12,belly[1],belly[2]]),pole:[s*.4,-.2,-1],palm:[-s,0,0],fingers:'grip'};}});}
 };
 export function bodyPose(id,u){const make=BODY_IDS[id];if(!make)throw new Error('No body pose for '+id);return make(((u%1)+1)%1);}

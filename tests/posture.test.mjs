@@ -228,3 +228,27 @@ test('bent-over row hinges with a flat back and rows the bar to the ribs',async(
  const e5=elbow(33,.5,1),fwd=T.dir([0,0,1]),behind=e5.elbow.map((x,i)=>x-e5.shoulder[i]).reduce((n,x,i)=>n+x*fwd[i],0);
  assert.ok(behind<0,'elbows drive past the back at the top');
 });
+
+test('seated cable row sits upright, feet braced, handle in both hands',async()=>{
+ const {GRIP}=await import('../dist/scene.js'),{ROW_SEAT}=await import('../dist/motion-body.js'),s=await studio();s.setExercise(34);
+ assert.ok(s.rowCable,'seated row equipment');
+ const angle=(a,b,c)=>{const u=a.map((x,i)=>x-b[i]),v=c.map((x,i)=>x-b[i]);return Math.acos(u.reduce((n,x,i)=>n+x*v[i],0)/Math.hypot(...u)/Math.hypot(...v))*180/Math.PI;};
+ const ends=m=>{const c=m.getWorldPosition(new THREE.Vector3()),ax=new THREE.Vector3(0,1,0).applyQuaternion(m.getWorldQuaternion(new THREE.Quaternion())).multiplyScalar(m.scale.y/2);return [c.clone().sub(ax),c.clone().add(ax)];};
+ const a0=poseAt(34,0).ankles;
+ for(let f=0;f<=20;f++){const u=f/20,p=poseAt(34,u);s.update(u);s.scene.updateMatrixWorld(true);
+  const seat=clearance(34,u,region.hips)+MAT-ROW_SEAT;assert.ok(seat>-.012&&seat<.015,`u${u} seat ${seat.toFixed(3)} from the bench top`);
+  const sc=p.arms(1).shoulder.map((x,i)=>(x+p.arms(-1).shoulder[i])/2),d=sc.map((x,i)=>x-p.hip[i]),lean=Math.atan2(Math.hypot(d[0],d[2]),d[1])*180/Math.PI;
+  assert.ok(lean<=15,`u${u} trunk ${lean.toFixed(1)}° from vertical`);
+  p.ankles.forEach((x,i)=>assert.ok(Math.hypot(...x.map((v,j)=>v-a0[i][j]))<1e-9,`u${u} feet moved on the footplate`));
+  for(const i of [0,1]){const k=angle([(i?1:-1)*HIP,...p.hip.slice(1)],p.knees[i],p.ankles[i]);assert.ok(k>=130&&k<=175,`u${u} knee ${k.toFixed(0)}°`);}
+  const [h0,h1]=ends(s.rowCable.handle),axis=h1.clone().sub(h0).normalize();
+  for(const n of ['L','R']){const g=s.athlete.map[n+'_Hand'].localToWorld(new THREE.Vector3(...GRIP)),off=g.clone().sub(h0);off.addScaledVector(axis,-off.dot(axis));assert.ok(off.length()<.02,`u${u} ${n} grip ${off.length().toFixed(3)} off the handle`);}
+  const [c0,c1]=ends(s.rowCable.line),anchor=new THREE.Vector3(...s.rowCable.anchor);
+  assert.ok(Math.min(c0.distanceTo(anchor),c1.distanceTo(anchor))<1e-6,'cable reaches the pulley');
+  assert.ok(clearance(34,u)>-.012-MAT,`u${u} skin below the floor`);
+ }
+ const b0=elbow(34,0,1);assert.ok(angle(b0.shoulder,b0.elbow,b0.hand)>=155,'arms long at the reach');
+ const {trunk}=await import('../dist/motion-body.js'),p5=poseAt(34,.5),T=trunk(p5.hip,p5.pitch,p5.spine),belly=T.at([0,-.42,.16]),top=p5.arms(1).hand.map((x,i)=>(x+p5.arms(-1).hand[i])/2);
+ assert.ok(Math.hypot(...top.map((x,i)=>x-belly[i]))<=.12,'handle reaches the stomach');
+ const e5=elbow(34,.5,1),fwd=T.dir([0,0,1]);assert.ok(e5.elbow.map((x,i)=>x-e5.shoulder[i]).reduce((n,x,i)=>n+x*fwd[i],0)<0,'elbows drive behind the torso');
+});
