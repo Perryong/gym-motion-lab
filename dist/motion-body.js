@@ -118,6 +118,14 @@ export const BODY_IDS={
  32:u=>{const t=cycleT(u,.45),BAR=3.6,WRIST=BAR-.174,shoulderY=WRIST-.86+.984*t,pitch=-.08*t,spine={Chest:[-.1*t]},hip=hipFor([0,shoulderY,-.03],pitch,spine);
   return pose({t,hip,pitch,spine,feet:'shin',focus:[0,2.5,0],
    ankles:[-1,1].map(s=>[s*HIP,hip[1]-LEG*.995,hip[2]+.02]),
-   hands:s=>({at:[s*.52,WRIST,0],pole:[s,-.6,.2],palm:[0,0,1],fingers:'grip'})});}
+   hands:s=>({at:[s*.52,WRIST,0],pole:[s,-.6,.2],palm:[0,0,1],fingers:'grip'})});},
+ // Barbell bent-over row: a fixed hinge 45° from horizontal with soft knees; the bar
+ // travels from arm's length under the shoulders to the lower ribs, elbows up and back.
+ // Hips sit back so the shoulders, and the hanging bar, stack over the middle of the foot.
+ 33:u=>{const t=cycleT(u,.45),hip=[0,ANKLE_HEIGHT+1.146,-.5],pitch=Math.PI/4,T=trunk(hip,pitch);
+  const ribs=T.at([0,-.17,.12]),lerp=(a,b)=>a.map((x,i)=>x+(b[i]-x)*t);
+  return pose({t,hip,pitch,focus:[0,1.0,0],
+   ankles:[[-.14,ANKLE_HEIGHT,0],[.14,ANKLE_HEIGHT,0]],
+   hands:(s,T)=>{const sh=T.shoulder(s);return {at:lerp([s*.26,sh[1]-.865,sh[2]+.05],[s*.26,ribs[1],ribs[2]]),pole:[s*.5,.4,-1],palm:[0,0,-1],fingers:'grip'};}});}
 };
 export function bodyPose(id,u){const make=BODY_IDS[id];if(!make)throw new Error('No body pose for '+id);return make(((u%1)+1)%1);}

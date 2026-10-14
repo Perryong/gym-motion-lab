@@ -94,7 +94,7 @@ export class Studio {
   if(id===25)this.box(e,[0,.075,.26],[.9,.15,.5],m.pad);
   if(id===31||id===32){for(const side of [-1,1]){this.rod(e,[side*1.0,.05,-.2],[side*1.0,3.6,-.2],.05,m.metal);this.rod(e,[side*1.0,.05,-.6],[side*1.0,.05,.3],.06,m.metal);}this.pullBar=this.rod(e,[-1,0,0],[1,0,0],.025,m.chrome);}
   this.weights.forEach(w=>w.visible=[0,1,2,5,7,8,13,21].includes(id));if(id===5||id===21)this.weights[1].visible=false;
-  this.bar.visible=[4,17,20,23].includes(id);this.plate.visible=[10,29].includes(id);this.ball.visible=id===12;
+  this.bar.visible=[4,17,20,23,33].includes(id);this.plate.visible=[10,29].includes(id);this.ball.visible=id===12;
   this.athlete.setMuscles(!!this.highlight,exercises[id].group);
   this.update(0);this.view('perspective');
  }
@@ -106,7 +106,7 @@ export class Studio {
   this.weights.forEach((w,i)=>{const s=i===0?-1:1;w.position.copy(palm(s));w.quaternion.copy(rootQ).multiply(bone(s).getWorldQuaternion(new THREE.Quaternion()));
    if(this.id===5||this.id===21){w.position.copy(both);w.rotation.set(0,0,Math.PI/2);}
   });
-  if([4,17,20,23].includes(this.id)){this.bar.position.set(0,both.y,both.z);}
+  if([4,17,20,23,33].includes(this.id)){this.bar.position.set(0,both.y,both.z);}
   this.root.updateMatrixWorld(true);
   for(const {arm,grip,side} of this.machineArms??[]){const hand=this.root.localToWorld(palm(side));this.link(arm,[side*.86,1.74,-.30],hand.toArray());grip.position.copy(hand);}
   // Each ring hangs from its strap with the fist closed around the lower rim.

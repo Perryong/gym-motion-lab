@@ -202,3 +202,29 @@ test('pull-up hangs from the bar with both hands gripping it',async()=>{
  const chin=s.athlete.map.Head.getWorldPosition(new THREE.Vector3()).y-.08,barY=s.pullBar.getWorldPosition(new THREE.Vector3()).y;
  assert.ok(chin>=barY,`chin ${chin.toFixed(3)} below bar ${barY.toFixed(3)} at the top`);
 });
+
+test('bent-over row hinges with a flat back and rows the bar to the ribs',async()=>{
+ const {GRIP}=await import('../dist/scene.js'),{trunk}=await import('../dist/motion-body.js'),s=await studio();s.setExercise(33);
+ const angle=(a,b,c)=>{const u=a.map((x,i)=>x-b[i]),v=c.map((x,i)=>x-b[i]);return Math.acos(u.reduce((n,x,i)=>n+x*v[i],0)/Math.hypot(...u)/Math.hypot(...v))*180/Math.PI;};
+ const a0=poseAt(33,0).ankles;
+ for(let f=0;f<=20;f++){const u=f/20,p=poseAt(33,u);s.update(u);s.scene.updateMatrixWorld(true);
+  const sc=p.arms(1).shoulder.map((x,i)=>(x+p.arms(-1).shoulder[i])/2),d=sc.map((x,i)=>x-p.hip[i]),trunkDeg=Math.atan2(d[1],Math.hypot(d[0],d[2]))*180/Math.PI;
+  assert.ok(trunkDeg>=40&&trunkDeg<=50,`u${u} trunk ${trunkDeg.toFixed(1)}° from horizontal`);
+  for(const b of ['Spine','Chest','ShoulderLine'])for(const x of p.spine[b]??[])assert.ok(Math.abs(x)<=.1,`u${u} ${b} bend ${x}`);
+  p.ankles.forEach((x,i)=>assert.ok(Math.hypot(...x.map((v,j)=>v-a0[i][j]))<1e-9,`u${u} foot moved`));
+  for(const i of [0,1]){const k=angle([(i?1:-1)*HIP,...p.hip.slice(1)],p.knees[i],p.ankles[i]);assert.ok(k>=150&&k<=175,`u${u} knee ${k.toFixed(0)}°`);}
+  const bar=s.bar.getWorldPosition(new THREE.Vector3());
+  for(const n of ['L','R']){const g=s.athlete.map[n+'_Hand'].localToWorld(new THREE.Vector3(...GRIP));const off=Math.hypot(g.y-bar.y,g.z-bar.z);assert.ok(off<.015,`u${u} ${n} grip ${off.toFixed(3)} off the bar`);}
+  const c=shoeContact(s);assert.ok(c.gap>-.012&&c.gap<.015,`u${u} shoes ${c.gap.toFixed(3)} from the floor`);
+  assert.ok(clearance(33,u)>-.012-MAT,`u${u} skin below the floor`);
+ }
+ const b0=elbow(33,0,1);assert.ok(angle(b0.shoulder,b0.elbow,b0.hand)>=160,'arms long at the bottom');
+ const p0=poseAt(33,0),barZ=(p0.arms(1).hand[2]+p0.arms(-1).hand[2])/2;
+ // The bar hangs over the middle of the foot (ankle to toes ≈ 0 to .3) and in front of the knees.
+ assert.ok(barZ>=p0.ankles[1][2]&&barZ<=p0.ankles[1][2]+.25,`bar z ${barZ.toFixed(2)} not over the middle of the foot`);
+ assert.ok(barZ>Math.max(p0.knees[0][2],p0.knees[1][2]),'bar in front of the knees');
+ const p5=poseAt(33,.5),T=trunk(p5.hip,p5.pitch,p5.spine),rib=T.at([0,-.17,.12]),top=p5.arms(1).hand;
+ assert.ok(Math.abs(top[1]-rib[1])<=.12,`bar ${top[1].toFixed(2)} vs lower ribs ${rib[1].toFixed(2)} at the top`);
+ const e5=elbow(33,.5,1),fwd=T.dir([0,0,1]),behind=e5.elbow.map((x,i)=>x-e5.shoulder[i]).reduce((n,x,i)=>n+x*fwd[i],0);
+ assert.ok(behind<0,'elbows drive past the back at the top');
+});

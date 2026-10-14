@@ -41,6 +41,6 @@ test('all 18 real scenes build and animate with finite geometry and attached equ
   }
   assert.equal(s.cables.length,id===11?1:id===16?2:0);
   assert.equal(s.rings.length,id===19?2:0);
-  assert.equal(s.bar.visible,[4,17,20,23].includes(id));
+  assert.equal(s.bar.visible,[4,17,20,23,33].includes(id));
  }
 });
