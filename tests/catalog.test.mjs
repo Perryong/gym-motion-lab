@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {GROUPS,catalogIds,exerciseById,isExerciseId,parseExerciseId,filterExercises,routeFor} from '../dist/catalog.js';
+import {GROUPS,catalogIds,exerciseById,isExerciseId,parseExerciseId,filterExercises,routeFor,ALIASES,resolveExerciseId} from '../dist/catalog.js';
 import {LIBRARY} from '../dist/library.js';
 import {allIds,groups} from '../dist/exercises.js';
 
@@ -48,4 +48,11 @@ test('routes keep old links working and send bad exercise ids to the list',()=>{
   ['#exercise/L9999',['exercises']],['#exercise/Lfoo',['exercises']],['#exercise/4',['exercise',4]],['#exercise/'+lib,['exercise',lib]],
   ['',['home']],['#nonsense',['home']],['#home',['home']],['#stats',['stats']],['#plan',['plan']],['#workout',['workout']],['#exercises',['exercises']]])
   assert.deepEqual(routeFor(hash),want,hash);
+});
+
+test('replaced library ids resolve to their 3D exercises',()=>{
+ assert.deepEqual(ALIASES,{L0027:33,L0861:34});
+ assert.equal(resolveExerciseId('L0027'),33);assert.equal(resolveExerciseId('L0861'),34);assert.equal(resolveExerciseId(4),4);assert.equal(resolveExerciseId('L9999'),'L9999');
+ assert.deepEqual(routeFor('#exercise/L0861'),['exercise',34]);assert.deepEqual(routeFor('#exercise/L0027'),['exercise',33]);
+ assert.equal(parseExerciseId('L0027'),33);
 });

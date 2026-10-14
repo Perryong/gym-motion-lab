@@ -90,3 +90,8 @@ test('workouts are grouped by local date with completed set counts',async()=>{
  assert.equal(map.get('2026-10-08').length,2);
  assert.equal(map.get('2026-10-08')[0].sets,3);
 });
+
+test('3D back exercises count toward Back',()=>{
+ const w={...at(9,8),entries:[{id:33,sets:[{kg:50,reps:8,done:true},{kg:50,reps:8,done:true}]},{id:32,sets:[{kg:null,reps:6,done:true}]}]};
+ assert.deepEqual(muscleSets([w],NOW,7),{chest:0,back:3,shoulders:0,arms:0,legs:0,core:0});
+});

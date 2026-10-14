@@ -1,4 +1,4 @@
-import {isExerciseId} from './catalog.js';
+import {isExerciseId,resolveExerciseId} from './catalog.js';
 export const DAYS=['mon','tue','wed','thu','fri','sat','sun'];
 export const DAY_NAMES={mon:'Monday',tue:'Tuesday',wed:'Wednesday',thu:'Thursday',fri:'Friday',sat:'Saturday',sun:'Sunday'};
 export const REST_SECONDS=90;
@@ -12,13 +12,14 @@ const bodyKg=n=>typeof n==='number'&&n>=20&&n<=400?Math.round(n*10)/10:null;
 const isDate=d=>typeof d==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(d)&&!Number.isNaN(Date.parse(d));
 // One entry per date (later wins), sorted oldest first.
 const cleanWeights=list=>{const byDate=new Map();for(const w of Array.isArray(list)?list:[]){const kg=bodyKg(w?.kg);if(isDate(w?.date)&&kg!==null)byDate.set(w.date,kg);}return [...byDate].sort(([a],[b])=>a<b?-1:1).map(([date,kg])=>({date,kg}));};
-const cleanEntries=entries=>Array.isArray(entries)?entries.filter(e=>valid(e?.id)).map(e=>({id:e.id,sets:cleanSets(e.sets)})):[];
+// Replaced library ids are mapped to their 3D exercise before validating, so history carries over.
+const cleanEntries=entries=>Array.isArray(entries)?entries.map(e=>({...e,id:resolveExerciseId(e?.id)})).filter(e=>valid(e.id)).map(e=>({id:e.id,sets:cleanSets(e.sets)})):[];
 // Stored data is untrusted: anything malformed falls back to an empty week rather than breaking the app.
 export function normalize(raw){
  let data;try{data=JSON.parse(raw);}catch{data=null;}
  if(!data||typeof data!=='object')data={};
  const plan={};
- for(const d of DAYS){const day=data.plan?.[d];plan[d]={name:typeof day?.name==='string'?day.name.slice(0,40):'',items:Array.isArray(day?.items)?day.items.filter(i=>valid(i?.id)).map(i=>({id:i.id,sets:count(i.sets,3,20),reps:count(i.reps,10,999)})):[]};}
+ for(const d of DAYS){const day=data.plan?.[d];plan[d]={name:typeof day?.name==='string'?day.name.slice(0,40):'',items:Array.isArray(day?.items)?day.items.map(i=>({...i,id:resolveExerciseId(i?.id)})).filter(i=>valid(i.id)).map(i=>({id:i.id,sets:count(i.sets,3,20),reps:count(i.reps,10,999)})):[]};}
  const history=Array.isArray(data.history)?data.history.filter(h=>h&&typeof h==='object').map(h=>({day:DAYS.includes(h.day)?h.day:'mon',name:typeof h.name==='string'?h.name:'',started:Number(h.started)||0,finished:Number(h.finished)||0,entries:cleanEntries(h.entries)})):[];
  const a=data.active;
  const entries=cleanEntries(a?.entries);

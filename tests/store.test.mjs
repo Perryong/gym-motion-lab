@@ -101,3 +101,15 @@ test('old saved data with only 3D exercise ids loads unchanged',()=>{
   history:[{day:'mon',name:'Push',started:1,finished:2,entries:[{id:4,sets:[{kg:60,reps:10,done:true}]}]}],active:null,weights:[{date:'2026-10-01',kg:80}],goal:77};
  assert.deepEqual(normalize(JSON.stringify(old)),old);
 });
+
+test('saved data and backups with replaced library ids carry over to the 3D exercises',async()=>{
+ const {readBackup,exportBackup}=await import('../dist/store.js');
+ const raw={plan:{mon:{name:'Pull',items:[{id:'L0027',sets:4,reps:8},{id:'L0861',sets:3,reps:12}]}},
+  history:[{day:'mon',name:'Pull',started:1,finished:2,entries:[{id:'L0027',sets:[{kg:50,reps:8,done:true}]},{id:'L0861',sets:[{kg:40,reps:12,done:true}]}]}],
+  active:{day:'mon',entries:[{id:'L0861',sets:[{kg:40,reps:12,done:false}]}]}};
+ const n=normalize(JSON.stringify(raw));
+ assert.deepEqual(n.plan.mon.items,[{id:33,sets:4,reps:8},{id:34,sets:3,reps:12}]);
+ assert.deepEqual(n.history[0].entries,[{id:33,sets:[{kg:50,reps:8,done:true}]},{id:34,sets:[{kg:40,reps:12,done:true}]}]);
+ assert.deepEqual(n.active.entries.map(e=>e.id),[34]);
+ assert.deepEqual(readBackup(JSON.stringify({app:'form-gym',version:1,data:raw})).history[0].entries.map(e=>e.id),[33,34]);
+});

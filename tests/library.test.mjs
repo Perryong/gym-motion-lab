@@ -40,7 +40,7 @@ test('the generated library follows the spec',async()=>{
  assert.deepEqual(LIBRARY_SOURCE,{repo:'hasaneyldrm/exercises-dataset',commit:'7455efae41b3',license:'MIT'});
  assert.ok(LIBRARY.length>=130&&LIBRARY.length<=170,`${LIBRARY.length} entries`);
  assert.equal(new Set(LIBRARY.map(e=>e.id)).size,LIBRARY.length,'unique ids');
- const counts={chest:18,back:0,shoulders:0,arms:0,legs:6,core:6};
+ const counts={chest:18,back:3,shoulders:0,arms:0,legs:6,core:6};
  for(const e of LIBRARY){
   assert.match(e.id,/^L\d{4}$/);
   for(const k of ['name','short','target'])assert.ok(typeof e[k]==='string'&&e[k].length>1,`${e.id} ${k}`);
@@ -70,4 +70,10 @@ test('the dataset licence ships with the library',async()=>{
  const header=(await readFile(new URL('../dist/library.js',import.meta.url),'utf8')).split('\n').slice(0,3).join('\n');
  assert.match(header,/LIBRARY-LICENSE\.txt/);
  assert.match(await readFile(new URL('../README.md',import.meta.url),'utf8'),/LIBRARY-LICENSE\.txt/);
+});
+
+test('exercises that now have 3D motion leave the text library',async()=>{
+ const {LIBRARY}=await import('../dist/library.js'),ids=new Set(LIBRARY.map(e=>e.id));
+ assert.equal(LIBRARY.length,135);
+ for(const id of ['L0027','L0861','L0652'])assert.ok(!ids.has(id),`${id} should be the 3D exercise now`);
 });
