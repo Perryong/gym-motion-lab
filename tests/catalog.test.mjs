@@ -2,16 +2,17 @@ import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {GROUPS,catalogIds,exerciseById,isExerciseId,parseExerciseId,filterExercises,routeFor} from '../dist/catalog.js';
 import {LIBRARY} from '../dist/library.js';
+import {allIds,groups} from '../dist/exercises.js';
 
 test('six groups in display order',()=>{
  assert.deepEqual(GROUPS,[{key:'chest',label:'Chest'},{key:'back',label:'Back'},{key:'shoulders',label:'Shoulders'},{key:'arms',label:'Arms'},{key:'legs',label:'Legs'},{key:'core',label:'Core'}]);
 });
 
 test('the catalog lists the 30 3D exercises first, then the library, once each',()=>{
- assert.equal(catalogIds.length,30+LIBRARY.length);
+ assert.equal(catalogIds.length,allIds.length+LIBRARY.length);
  assert.equal(new Set(catalogIds).size,catalogIds.length);
- assert.ok(catalogIds.slice(0,30).every(Number.isInteger));
- assert.deepEqual(catalogIds.slice(30),LIBRARY.map(e=>e.id));
+ assert.ok(catalogIds.slice(0,allIds.length).every(Number.isInteger));
+ assert.deepEqual(catalogIds.slice(allIds.length),LIBRARY.map(e=>e.id));
 });
 
 test('lookups return one shape for 3D and library exercises',()=>{
@@ -31,12 +32,13 @@ test('route text parses to a known exercise id or null',()=>{
 });
 
 test('filters by group, 3D and search',()=>{
- assert.equal(filterExercises({only3d:true}).length,30);
+ assert.equal(filterExercises({only3d:true}).length,allIds.length);
+ assert.equal(exerciseById(32).group,'back');assert.ok(exerciseById(32).has3d);
  const core=filterExercises({group:'core'});
  assert.ok(core.includes(26));assert.ok(core.every(id=>exerciseById(id).group==='core'));
  const lib=LIBRARY.find(e=>e.secondary.length),muscle=lib.secondary[0].toUpperCase();
  assert.ok(filterExercises({query:muscle}).includes(lib.id),`search "${muscle}" finds ${lib.id}`);
- assert.ok(filterExercises({group:'back',only3d:true}).length===0,'no 3D back exercises yet');
+ assert.deepEqual(filterExercises({group:'back',only3d:true}),groups.back);
  assert.equal(filterExercises({}).length,catalogIds.length);
 });
 

@@ -187,3 +187,18 @@ test('an exercise without a baked clip poses live and stops the previous clip',(
   assert.equal(athlete.action?.getClip().name,'Exercise_4','baked clip plays again');
  }finally{athlete.clips=clips;}
 });
+
+test('pull-up hangs from the bar with both hands gripping it',async()=>{
+ const {GRIP}=await import('../dist/scene.js'),s=await studio();s.setExercise(32);
+ const angle=(a,b,c)=>{const u=a.map((x,i)=>x-b[i]),v=c.map((x,i)=>x-b[i]);return Math.acos(u.reduce((n,x,i)=>n+x*v[i],0)/Math.hypot(...u)/Math.hypot(...v))*180/Math.PI;};
+ for(let f=0;f<=20;f++){const u=f/20;s.update(u);s.scene.updateMatrixWorld(true);
+  const bar=s.pullBar.getWorldPosition(new THREE.Vector3());
+  for(const n of ['L','R']){const g=s.athlete.map[n+'_Hand'].localToWorld(new THREE.Vector3(...GRIP));const off=Math.hypot(g.y-bar.y,g.z-bar.z);assert.ok(off<.015,`u${u} ${n} grip ${off.toFixed(3)} off the bar`);}
+  const c=shoeContact(s);assert.ok(c.gap>=.15,`u${u} feet ${c.gap.toFixed(3)} above the floor`);
+  const p=poseAt(32,u);for(const i of [0,1])assert.ok(Math.abs(p.ankles[i][2]-p.hip[2])<.2,`u${u} legs hang below the hips`);
+ }
+ const a0=elbow(32,0,1);assert.ok(angle(a0.shoulder,a0.elbow,a0.hand)>=160,'dead hang with straight arms');
+ s.update(.5);s.scene.updateMatrixWorld(true);
+ const chin=s.athlete.map.Head.getWorldPosition(new THREE.Vector3()).y-.08,barY=s.pullBar.getWorldPosition(new THREE.Vector3()).y;
+ assert.ok(chin>=barY,`chin ${chin.toFixed(3)} below bar ${barY.toFixed(3)} at the top`);
+});

@@ -159,3 +159,6 @@ a.pill{text-decoration:none}
 .text-steps{padding-left:22px;margin:8px 0 16px;line-height:1.55}.text-steps li{margin-bottom:8px}
 .credit{font-size:12px;margin:0}
 .steps-card{background:var(--card);border-radius:18px;padding:16px 18px}.steps-card small{color:var(--muted);font-size:12px;letter-spacing:.5px}.steps-card ol{padding-left:20px;margin:8px 0 0;line-height:1.5}.steps-card li{margin-bottom:6px}
+
+/* Muscles toggle without an overlay for the group */
+.viewer-tools button:disabled{opacity:.4;cursor:not-allowed}

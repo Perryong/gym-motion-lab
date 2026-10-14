@@ -92,7 +92,7 @@ export class Studio {
   }
   if(id===20)for(const side of [-1,1]){this.rod(e,[side*.78,.08,-.2],[side*.78,2.0,-.2],.045,m.metal);this.rod(e,[side*.78,.09,-.55],[side*.78,.09,.25],.055,m.metal);this.box(e,[side*.78,1.45,-.12],[.08,.05,.16],m.dark);}
   if(id===25)this.box(e,[0,.075,.26],[.9,.15,.5],m.pad);
-  if(id===31){for(const side of [-1,1]){this.rod(e,[side*1.0,.05,-.2],[side*1.0,3.6,-.2],.05,m.metal);this.rod(e,[side*1.0,.05,-.6],[side*1.0,.05,.3],.06,m.metal);}this.pullBar=this.rod(e,[-1,0,0],[1,0,0],.025,m.chrome);}
+  if(id===31||id===32){for(const side of [-1,1]){this.rod(e,[side*1.0,.05,-.2],[side*1.0,3.6,-.2],.05,m.metal);this.rod(e,[side*1.0,.05,-.6],[side*1.0,.05,.3],.06,m.metal);}this.pullBar=this.rod(e,[-1,0,0],[1,0,0],.025,m.chrome);}
   this.weights.forEach(w=>w.visible=[0,1,2,5,7,8,13,21].includes(id));if(id===5||id===21)this.weights[1].visible=false;
   this.bar.visible=[4,17,20,23].includes(id);this.plate.visible=[10,29].includes(id);this.ball.visible=id===12;
   this.athlete.setMuscles(!!this.highlight,exercises[id].group);

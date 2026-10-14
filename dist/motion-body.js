@@ -112,5 +112,12 @@ export const BODY_IDS={
   return pose({t,hip,pitch,spine,feet:'shin',focus:[0,1.9,0],
    ankles:[-1,1].map(s=>{const k=add([s*HIP,hip[1],hip[2]],[0,-THIGH*Math.cos(a),THIGH*Math.sin(a)]);return add(k,[0,-SHIN*.995,SHIN*.05]);}),
    hands:s=>({at:[s*.46,BAR,0],pole:[s,0,0],palm:[0,0,1],fingers:'grip'})});},
+ // Pull-up: hands fixed on the bar; the elbows bend to lift the shoulders from a
+ // near-straight dead hang until the chin clears the bar. Legs hang straight below the hips.
+ // BAR is the bar (grip) height: with the arms overhead the grip sits .174 above the wrist.
+ 32:u=>{const t=cycleT(u,.45),BAR=3.6,WRIST=BAR-.174,shoulderY=WRIST-.86+.984*t,pitch=-.08*t,spine={Chest:[-.1*t]},hip=hipFor([0,shoulderY,-.03],pitch,spine);
+  return pose({t,hip,pitch,spine,feet:'shin',focus:[0,2.5,0],
+   ankles:[-1,1].map(s=>[s*HIP,hip[1]-LEG*.995,hip[2]+.02]),
+   hands:s=>({at:[s*.52,WRIST,0],pole:[s,-.6,.2],palm:[0,0,1],fingers:'grip'})});}
 };
 export function bodyPose(id,u){const make=BODY_IDS[id];if(!make)throw new Error('No body pose for '+id);return make(((u%1)+1)%1);}
