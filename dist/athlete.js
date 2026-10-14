@@ -25,8 +25,15 @@ export class Athlete {
   this.mixer=new THREE.AnimationMixer(this.group);this.clips=gltf.animations;this.id=-1;
  }
  update(id,phase){
-  if(this.id!==id){this.mixer.stopAllAction();this.action=this.mixer.clipAction(this.clips.find(c=>c.name==='Exercise_'+id));this.action.setLoop(THREE.LoopRepeat,Infinity);this.action.play();this.id=id;}
-  this.mixer.setTime((((phase%1)+1)%1)*durationFor(id));
+  if(this.id!==id){
+   this.mixer.stopAllAction();
+   // Exercises added after the model was baked have no clip; applyRigPose below poses them live.
+   const clip=this.clips.find(c=>c.name==='Exercise_'+id);
+   this.action=clip?this.mixer.clipAction(clip):null;
+   if(this.action){this.action.setLoop(THREE.LoopRepeat,Infinity);this.action.play();}
+   this.id=id;
+  }
+  if(this.action)this.mixer.setTime((((phase%1)+1)%1)*durationFor(id));
   // Resolve exact equipment anchors after clip interpolation. Bone lengths never scale.
   const pose=applyRigPose(this.group,this.map,id,phase);this.meshes.forEach(m=>m.skeleton.update());return pose;
  }

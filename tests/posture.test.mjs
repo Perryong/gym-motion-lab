@@ -174,3 +174,16 @@ test('floor press shoes stand on top of the mat',async()=>{
  const s=await studio();s.setExercise(1);
  for(let f=0;f<=20;f++){s.update(f/20);const c=shoeContact(s);assert.ok(c.onMat&&c.gap>-.012&&c.gap<.015,`floor press u${f/20}: shoe ${c.gap.toFixed(3)} from the mat`);}
 });
+
+test('an exercise without a baked clip poses live and stops the previous clip',()=>{
+ const clips=athlete.clips;
+ try{
+  athlete.update(4,.3);assert.ok(athlete.action,'baked exercise plays its clip');
+  athlete.clips=clips.filter(c=>c.name!=='Exercise_24');
+  assert.doesNotThrow(()=>athlete.update(24,.5));
+  assert.equal(athlete.action,null,'no clip action for an unbaked exercise');
+  assert.ok(Math.abs(athlete.map.Hips.position.y-poseAt(24,.5).hip[1])<1e-6,'live pose drives the hips');
+  athlete.clips=clips;athlete.update(4,.3);
+  assert.equal(athlete.action?.getClip().name,'Exercise_4','baked clip plays again');
+ }finally{athlete.clips=clips;}
+});
