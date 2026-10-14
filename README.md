@@ -14,6 +14,16 @@ The skeleton keeps 48 bones and 30 baked exercise clips. Arms keep fixed .44/.44
 
 AnimationMixer controls deterministic clip playback; runtime IK resolves exact grip and support targets after interpolation. Clips are illustrative animations, not certified biomechanics or motion capture.
 
+## Exercise library
+
+Besides the 30 exercises with 3D motion, `dist/library.js` holds 137 text-only exercises (names, muscles, equipment and English steps). Exercise text from hasaneyldrm/exercises-dataset (MIT), pinned at commit `7455efae41b3` (`data/exercises.json`). The dataset's licence ships as `dist/LIBRARY-LICENSE.txt`. The dataset's images and animations (© Gym visual) are not used.
+
+To regenerate after editing `scripts/library-ids.json` (`include` lists dataset ids; `duplicates` maps dataset ids of the 3D movements to their 3D id so they are not added twice):
+
+1. Download the pinned dataset outside the repo: `curl -sL -o /tmp/exercises.json https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b3/data/exercises.json`
+2. `node scripts/build-library.mjs /tmp/exercises.json`
+3. `node --test tests/*.test.mjs`
+
 ## Regenerate the asset
 
 1. In Blender, import the Sketchfab model into its own scene.

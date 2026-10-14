@@ -1,4 +1,4 @@
-import {exercises} from './exercises.js';
+import {exerciseById} from './catalog.js';
 import {DAYS,DAY_NAMES,REST_SECONDS,dayKey,startWorkout,finishWorkout,lastKg} from './store.js';
 import {$,el,intIn,toast} from './ui.js';
 import {parkViewer} from './studio-view.js';
@@ -8,7 +8,7 @@ const clock=s=>`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
 export function renderWorkout(state,commit,show){
  const root=$('workout-body'),a=state.active;parkViewer();
  if(!a){stopRest();root.replaceChildren(...startScreen(state,commit,show));return;}
- const entry=a.entries[a.index],e=exercises[entry.id],total=a.entries.length,title=a.name||DAY_NAMES[a.day];
+ const entry=a.entries[a.index],e=exerciseById(entry.id),total=a.entries.length,title=a.name||DAY_NAMES[a.day];
  const go=step=>{a.index=Math.min(total-1,Math.max(0,a.index+step));commit();renderWorkout(state,commit,show);};
  const finish=()=>{
   const done=a.entries.reduce((n,x)=>n+x.sets.filter(s=>s.done).length,0);
@@ -33,7 +33,7 @@ export function renderWorkout(state,commit,show){
   el('header',{class:'app-head'},el('div',{},el('h1',{id:'workout-title'},title),el('p',{},`Exercise ${a.index+1} of ${total} · ${DAY_NAMES[a.day]}`)),el('button',{class:'pill solid',onclick:finish},'Finish')),
   el('div',{class:'ex-switch'},
    el('button',{class:'icon',onclick:()=>go(-1),disabled:a.index===0,'aria-label':'Previous exercise'},'‹'),
-   el('a',{href:'#exercise/'+entry.id},el('strong',{},e.name),el('small',{},`${e.focus} · ${e.equipment}`)),
+   el('a',{href:'#exercise/'+entry.id},el('strong',{},e.name),el('small',{},`${e.target} · ${e.equipment}`)),
    el('button',{class:'icon',onclick:()=>go(1),disabled:a.index===total-1,'aria-label':'Next exercise'},'›')),
   slot,
   el('table',{class:'sets'},el('thead',{},el('tr',{},...['Set','Last','kg','Reps','Done'].map(h=>el('th',{scope:'col'},h)))),el('tbody',{},...rows)),
@@ -42,14 +42,16 @@ export function renderWorkout(state,commit,show){
    el('button',{class:'icon',onclick:()=>startRest(Math.max(0,secondsLeft()-15)),'aria-label':'15 seconds less rest'},'−15'),
    el('button',{class:'icon',onclick:()=>startRest(secondsLeft()+15),'aria-label':'15 seconds more rest'},'+15'),
    el('button',{class:'pill',onclick:stopRest},'Skip')),
-  a.index<total-1?el('button',{class:'next',onclick:()=>go(1)},`Next: ${exercises[a.entries[a.index+1].id].short} ›`):el('button',{class:'next',onclick:finish},'Finish workout'));
- show(entry.id,slot);
+  a.index<total-1?el('button',{class:'next',onclick:()=>go(1)},`Next: ${exerciseById(a.entries[a.index+1].id).short} ›`):el('button',{class:'next',onclick:finish},'Finish workout'));
+ // Text-only exercises show their steps where the athlete would be; the viewer stays parked.
+ if(e.has3d)show(entry.id,slot);
+ else slot.replaceChildren(el('div',{class:'card steps-card'},el('small',{},'HOW TO PERFORM'),el('ol',{},...e.steps.map(x=>el('li',{},x)))));
  if(restEnd)tickRest();
 }
 function startScreen(state,commit,show){
  const today=dayKey(),routine=state.plan[today];
  const begin=d=>{startWorkout(state,d);commit();renderWorkout(state,commit,show);};
- const card=(d,label)=>{const r=state.plan[d];return el('article',{class:'card today-card'},el('div',{},el('small',{},label),el('strong',{},r.name||DAY_NAMES[d]),el('span',{class:'muted'},`${r.items.length} exercise${r.items.length>1?'s':''} · `+r.items.map(i=>exercises[i.id].short).join(', '))),el('button',{class:'pill solid',onclick:()=>begin(d)},'Start'));};
+ const card=(d,label)=>{const r=state.plan[d];return el('article',{class:'card today-card'},el('div',{},el('small',{},label),el('strong',{},r.name||DAY_NAMES[d]),el('span',{class:'muted'},`${r.items.length} exercise${r.items.length>1?'s':''} · `+r.items.map(i=>exerciseById(i.id).short).join(', '))),el('button',{class:'pill solid',onclick:()=>begin(d)},'Start'));};
  const others=DAYS.filter(d=>d!==today&&state.plan[d].items.length);
  return [el('header',{class:'app-head'},el('div',{},el('h1',{id:'workout-title'},'Start'),el('p',{},`Today · ${DAY_NAMES[today]}`))),
   routine.items.length?card(today,'TODAY'):el('article',{class:'card'},el('strong',{},'Rest day'),el('p',{class:'muted'},'Nothing is planned for today.')),

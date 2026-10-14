@@ -1,4 +1,4 @@
-import {exercises} from './exercises.js';
+import {GROUPS,exerciseById} from './catalog.js';
 import {DAYS} from './store.js';
 const DAY_MS=864e5;
 const pad=n=>String(n).padStart(2,'0');
@@ -35,8 +35,8 @@ export function heatmap(history,now=Date.now(),weeks=52){
  }));
 }
 export function muscleSets(history,now=Date.now(),days=null){
- const from=days===null?-Infinity:now-days*DAY_MS,out={chest:0,legs:0,abs:0};
- for(const h of history)if(when(h)>=from)for(const e of h.entries)out[exercises[e.id].group]+=e.sets.filter(s=>s.done).length;
+ const from=days===null?-Infinity:now-days*DAY_MS,out=Object.fromEntries(GROUPS.map(g=>[g.key,0]));
+ for(const h of history)if(when(h)>=from)for(const e of h.entries){const g=exerciseById(e.id)?.group;if(g)out[g]+=e.sets.filter(s=>s.done).length;}
  return out;
 }
 // 'toward' / 'away' from the goal, or '' when there is no goal or no change.

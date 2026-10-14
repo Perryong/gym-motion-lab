@@ -1,4 +1,4 @@
-import {exercises} from './exercises.js';
+import {exerciseById} from './catalog.js';
 import {DAYS,DAY_NAMES,dayKey,removeFromPlan,startWorkout} from './store.js';
 import {$,el,intIn} from './ui.js';
 export function renderPlan(state,commit){
@@ -11,7 +11,7 @@ export function renderPlan(state,commit){
   rename.onchange=()=>{day.name=rename.value.trim();commit();};
   return el('article',{class:'card day'},head,rename,
    el('ol',{class:'plan-items'},...day.items.map((item,index)=>{
-    const e=exercises[item.id];
+    const e=exerciseById(item.id);
     const field=(key,label,max)=>{const input=el('input',{type:'number',inputmode:'numeric',min:'1',max:String(max),value:String(item[key]),'aria-label':`${label} for ${e.name}`});input.onchange=()=>{item[key]=intIn(input.value,1,max,item[key]);input.value=item[key];commit();};return input;};
     return el('li',{},el('a',{href:'#exercise/'+item.id},e.short),el('span',{class:'sxr'},field('sets','Sets',20),'×',field('reps','Reps',999)),
      el('button',{class:'icon',onclick:()=>{removeFromPlan(state,d,index);commit();renderPlan(state,commit);},'aria-label':`Remove ${e.name} from ${name}`},'✕'));

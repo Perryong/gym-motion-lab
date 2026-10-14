@@ -83,3 +83,21 @@ test('restoring rejects files that are not FORM backups and cleans bad data',asy
  const s=readBackup(JSON.stringify({app:'form-gym',version:1,data:{plan:{mon:{items:[{id:999},{id:4}]}},weights:[{date:'nope',kg:70}]}}));
  assert.deepEqual(s.plan.mon.items.map(i=>i.id),[4]);assert.deepEqual(s.weights,[]);
 });
+
+test('library exercise ids are kept in plans, history, workouts and backups',async()=>{
+ const {LIBRARY}=await import('../dist/library.js'),{readBackup,exportBackup}=await import('../dist/store.js');
+ const lib=LIBRARY[0].id,s=normalize(null);
+ addToPlan(s,'mon',lib);assert.deepEqual(s.plan.mon.items,[{id:lib,sets:3,reps:10}]);
+ const raw=JSON.stringify({plan:{tue:{items:[{id:lib},{id:'L9999'},{id:4}]}},history:[{day:'tue',started:1,finished:2,entries:[{id:lib,sets:[{kg:10,reps:8,done:true}]},{id:'L9999',sets:[]}]}],active:{day:'tue',entries:[{id:lib,sets:[{kg:null,reps:8,done:false}]}]}});
+ const n=normalize(raw);
+ assert.deepEqual(n.plan.tue.items.map(i=>i.id),[lib,4]);
+ assert.deepEqual(n.history[0].entries.map(e=>e.id),[lib]);
+ assert.deepEqual(n.active.entries.map(e=>e.id),[lib]);
+ assert.deepEqual(readBackup(exportBackup(n)).plan.tue.items.map(i=>i.id),[lib,4]);
+});
+
+test('old saved data with only 3D exercise ids loads unchanged',()=>{
+ const old={plan:{mon:{name:'Push',items:[{id:4,sets:3,reps:10},{id:26,sets:2,reps:15}]},tue:{name:'',items:[]},wed:{name:'',items:[]},thu:{name:'',items:[]},fri:{name:'',items:[]},sat:{name:'',items:[]},sun:{name:'',items:[]}},
+  history:[{day:'mon',name:'Push',started:1,finished:2,entries:[{id:4,sets:[{kg:60,reps:10,done:true}]}]}],active:null,weights:[{date:'2026-10-01',kg:80}],goal:77};
+ assert.deepEqual(normalize(JSON.stringify(old)),old);
+});

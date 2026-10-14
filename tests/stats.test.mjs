@@ -48,8 +48,21 @@ test('heatmap ends on this sunday and buckets minutes trained',()=>{
 
 test('muscle sets count completed sets per group within the range',()=>{
  const h=[at(8,1),at(9,8)];
- assert.deepEqual(muscleSets(h,NOW,7),{chest:2,legs:1,abs:0});
- assert.deepEqual(muscleSets(h,NOW,null),{chest:4,legs:2,abs:0});
+ assert.deepEqual(muscleSets(h,NOW,7),{chest:2,back:0,shoulders:0,arms:0,legs:1,core:0});
+ assert.deepEqual(muscleSets(h,NOW,null),{chest:4,back:0,shoulders:0,arms:0,legs:2,core:0});
+});
+
+test('sets of a library exercise count toward its group',async()=>{
+ const {LIBRARY}=await import('../dist/library.js'),arm=LIBRARY.find(e=>e.group==='arms');
+ const w={...at(9,8),entries:[{id:arm.id,sets:[{kg:10,reps:10,done:true},{kg:10,reps:10,done:true},{kg:10,reps:8,done:true}]},{id:26,sets:[{kg:null,reps:15,done:true}]}]};
+ assert.deepEqual(muscleSets([w],NOW,7),{chest:0,back:0,shoulders:0,arms:3,legs:0,core:1});
+});
+
+test('the body figure has a region for every group',async()=>{
+ const {bodyFigure}=await import('../dist/charts.js');
+ const svg=bodyFigure({chest:1,back:1,shoulders:1,arms:1,legs:1,core:1});
+ for(const g of ['chest','back','shoulders','arms','legs','core'])assert.ok(svg.includes(`data-group="${g}"`),g);
+ assert.ok(!svg.includes('data-group="abs"'),'old abs key');
 });
 
 test('goal trend says whether a weight change moves toward the goal',async()=>{
