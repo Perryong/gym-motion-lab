@@ -336,9 +336,15 @@ test('overhead press presses from the shoulders to straight arms over the head',
   for(const w of s.weights){assert.ok(w.visible,'two dumbbells');let d=Infinity;for(const i of region.head)d=Math.min(d,toDumbbell(m.getVertexPosition(i,new THREE.Vector3()).applyMatrix4(m.matrixWorld),w));
    assert.ok(d>=.03,`press u${u} head ${d.toFixed(3)} from a dumbbell`);}}
  for(const s1 of [-1,1]){const b=elbow(35,0,s1),t=elbow(35,.5,s1);
-  assert.ok(Math.abs(b.hand[1]-b.shoulder[1])<=.1,`bottom hand ${(b.hand[1]-b.shoulder[1]).toFixed(2)} from shoulder height`);
-  assert.ok(ang([b.elbow[0],b.elbow[1]+1,b.elbow[2]],b.elbow,b.hand)<=20,'bottom forearm vertical');
-  assert.ok(b.elbow[1]<b.hand[1],'bottom elbow below the hand');
+  // Bottom: elbow bent near a right angle under the wrist, dumbbells by the ears.
+  const lift=b.hand[1]-b.shoulder[1],eb=elbowDeg(35,0,s1);
+  assert.ok(lift>=.1&&lift<=.35,`bottom hand ${lift.toFixed(2)} above the shoulder`);
+  assert.ok(eb>=60&&eb<=100,`bottom elbow ${eb.toFixed(0)}°`);
+  for(const u of F){const a=elbow(35,u,s1),lean=ang([a.elbow[0],a.elbow[1]+1,a.elbow[2]],a.elbow,a.hand);
+   assert.ok(lean<=20,`press u${u} forearm ${lean.toFixed(0)}° off vertical`);
+   assert.ok(a.elbow[1]<a.hand[1],`press u${u} elbow above the hand`);
+   athlete.update(35,u);athlete.group.updateMatrixWorld(true);const n=s1<0?'L':'R',h=athlete.map[n+'_Hand'],fore=h.getWorldPosition(new THREE.Vector3()).sub(athlete.map[n+'_Forearm'].getWorldPosition(new THREE.Vector3())).normalize(),fingers=new THREE.Vector3(0,1,0).applyQuaternion(h.getWorldQuaternion(new THREE.Quaternion()));
+   assert.ok(fore.angleTo(fingers)*180/Math.PI<=30,`press u${u} ${n} wrist bent ${(fore.angleTo(fingers)*180/Math.PI).toFixed(0)}°`);}
   assert.ok(elbowDeg(35,.5,s1)>=160,`top elbow ${elbowDeg(35,.5,s1).toFixed(0)}°`);
   assert.ok(t.hand[1]-t.shoulder[1]>=.35,'top hands over the head');
   assert.ok(Math.abs(t.hand[0])>=Math.abs(t.shoulder[0])&&Math.abs(t.hand[0])<=Math.abs(t.shoulder[0])+.15,`top hand x ${t.hand[0].toFixed(2)}`);}
@@ -398,7 +404,7 @@ test('curls keep the upper arm at the side',async()=>{
 
 test('curl dumbbells never pass through the body',async()=>{
  const s=await studio(),m=s.athlete.mesh,body=[];
- for(let i=0;i<position.count;i+=2)if(!/^[LR]_(Hand|Index|Middle|Ring|Pinky|Thumb|Forearm)/.test(main(i)))body.push(i);
+ for(let i=0;i<position.count;i++)if(!/^[LR]_(Hand|Index|Middle|Ring|Pinky|Thumb|Forearm)/.test(main(i)))body.push(i);
  for(const id of [38,39]){s.setExercise(id);
   for(const u of F){s.update(u);s.scene.updateMatrixWorld(true);
    for(const w of s.weights){let d=Infinity;for(const i of body)d=Math.min(d,toDumbbell(m.getVertexPosition(i,new THREE.Vector3()).applyMatrix4(m.matrixWorld),w));

@@ -156,10 +156,10 @@ export const BODY_IDS={
   return pose({t,hip,pitch,knee:[0,1,0],focus:[0,.9,.5],footPitch:[-Math.PI/2,-Math.PI/2],
    ankles:[-1,1].map(s=>[s*HIP,.55,1.18]),
    hands:(s,T)=>{const sh=T.shoulder(s);return {at:lerp([s*.12,sh[1]-.28,sh[2]+.78],[s*.12,belly[1],belly[2]]),pole:[s*.4,-.2,-1],palm:[-s,0,0],fingers:'grip'};}});},
- // Dumbbell overhead press: forearms vertical at the shoulders, pressed to nearly straight arms.
+ // Dumbbell overhead press: elbows bent under the wrists with the dumbbells by the ears, pressed up and in to nearly straight arms.
  35:u=>{const t=cycleT(u,.5);
-  return pose({t,...upright(),hands:(s,T)=>{const sh=T.shoulder(s),lo=[s*.47,sh[1]+.02,sh[2]+.06],hi=[s*.44,sh[1]+.865,sh[2]];
-   return {at:lo.map((x,i)=>x+(hi[i]-x)*t),pole:[s*.3,-1,0],palm:[0,0,1],dir:[0,1,0],fingers:'grip'};}});},
+  return pose({t,...upright(),hands:(s,T)=>{const sh=T.shoulder(s),lo=[s*.737,sh[1]+.29,sh[2]+.145],hi=[s*.44,sh[1]+.865,sh[2]];
+   return {at:lo.map((x,i)=>x+(hi[i]-x)*(i?t:t*t)),pole:[s,-.4,.3],palm:[0,0,1],fingers:'grip'};}});},
  // Dumbbell lateral raise: arms sweep up in the side plane from the thighs to shoulder height.
  36:u=>{const t=cycleT(u,.5),a=(-80+80*t)*Math.PI/180;
   return pose({t,...upright(),hands:(s,T)=>{const sh=T.shoulder(s);
@@ -173,7 +173,7 @@ export const BODY_IDS={
  // Curls: the elbow stays fixed just in front of the hip line and the forearm hinges about it.
  38:u=>curl(u,(s,f)=>[0,Math.sin(f),Math.cos(f)],.1,24),
  // Hammer curl: the same hinge with the palms facing each other.
- 39:u=>curl(u,s=>[-s,0,0],.18,20,11),
+ 39:u=>curl(u,s=>[-s,0,-.2],.18,20,11),
  // Cable triceps pushdown: slight forward lean, elbows pinned at the sides, forearms hinge from level to straight.
  40:u=>{const t=cycleT(u,.5),f=(100-80*t)*Math.PI/180;
   return pose({t,...upright(),pitch:.12,hands:(s,T)=>{const sh=T.shoulder(s),d=[s*.08,-1,.1],n=.44/Math.hypot(...d),el=sh.map((x,i)=>x+d[i]*n),at=[el[0],el[1]-.44*Math.cos(f),el[2]+.44*Math.sin(f)];
