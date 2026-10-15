@@ -5,7 +5,7 @@ import {exercises,allIds} from './exercises.js';
 import {LIBRARY} from './library.js';
 
 export const GROUPS=[{key:'chest',label:'Chest'},{key:'back',label:'Back'},{key:'shoulders',label:'Shoulders'},{key:'arms',label:'Arms'},{key:'legs',label:'Legs'},{key:'core',label:'Core'}];
-const GROUP_3D={chest:'chest',legs:'legs',abs:'core',back:'back'};
+const GROUP_3D={chest:'chest',legs:'legs',abs:'core',back:'back',shoulders:'shoulders',arms:'arms'};
 
 const byId=new Map();
 for(const id of allIds){const e=exercises[id];

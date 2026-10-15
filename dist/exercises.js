@@ -46,8 +46,8 @@ exercises.push(
  {group:'back',name:'Barbell bent-over row',short:'Bent-over row',equipment:'Barbell',type:'Compound',focus:'Upper back & lats',secondary:'Rear shoulders · Biceps · Lower back',angle:0,kind:'row',stance:['45°','HIP HINGE'],labels:[[0,'ROWING'],[.5,'LOWERING']],desc:'A hip-hinged row that pulls a barbell from arm\'s length to your lower ribs.',steps:['Hold the bar overhand just outside your thighs, soften your knees and hinge forward to about 45° with a flat back.','Pull the bar to your lower ribs, driving your elbows up and back.','Lower the bar under control to straight arms without letting your back round.'],cue:'Keep your chest proud and your torso still while your arms do the work.',avoid:'Standing up or jerking your torso to swing the bar.',breath:['Breathe out as you row.','Breathe in as you lower.']},
  {group:'back',name:'Seated cable row',short:'Seated row',equipment:'Cable station · Bench',type:'Compound',focus:'Upper back & lats',secondary:'Rear shoulders · Biceps',angle:0,kind:'seatedRow',stance:['↓','SEATED'],labels:[[0,'ROWING'],[.5,'RETURNING']],desc:'A seated row that pulls a low cable handle to your stomach with an upright torso.',steps:['Sit tall on the bench with your feet braced on the footplate and knees softly bent.','Pull the handle to your stomach, driving your elbows back past your sides.','Let your arms extend toward the pulley under control without rounding your back.'],cue:'Squeeze your shoulder blades together before your arms finish the pull.',avoid:'Rocking your torso back and forth to move the weight.',breath:['Breathe out as you pull.','Breathe in as you return.']}
 );
-export const groups={chest:displayOrder,legs:[20,21,22,23,24,25],abs:[26,27,28,29,30,31],back:[32,33,34]};
-export const allIds=[...groups.chest,...groups.legs,...groups.abs,...groups.back];
+export const groups={chest:displayOrder,legs:[20,21,22,23,24,25],abs:[26,27,28,29,30,31],back:[32,33,34],shoulders:[],arms:[]};
+export const allIds=[...groups.chest,...groups.legs,...groups.abs,...groups.back,...groups.shoulders,...groups.arms];
 // The exercises with an animation clip baked into athlete.glb.
 export const bakedIds=[...groups.chest,...groups.legs,...groups.abs];
 export const GROUP_META={
@@ -55,5 +55,9 @@ export const GROUP_META={
  legs:{label:'Legs',title:'Legs',region:'LOWER BODY',overlay:'Legs overlay',note:'6 leg exercises for quads, glutes, hamstrings and calves.',link:['https://www.acefitness.org/resources/everyone/exercise-library/135/bodyweight-squat/','Squat technique · ACE ↗']},
  abs:{label:'Abs',title:'Core',region:'CORE',overlay:'Core overlay',note:'6 core exercises for spinal flexion, bracing and rotation.',link:['https://www.acefitness.org/resources/everyone/exercise-library/32/front-plank/','Plank technique · ACE ↗']},
  back:{label:'Back',title:'Back',region:'UPPER BODY',overlay:'Back overlay not available',note:'Back exercises with 3D motion: vertical pulls and rows.',link:['https://www.acefitness.org/resources/everyone/exercise-library/','Exercise library · ACE ↗']},
+ shoulders:{label:'Shoulders',title:'Shoulders',region:'UPPER BODY',overlay:'Shoulders overlay not available',note:'Shoulder exercises with 3D motion: pressing and raises.',link:['https://www.acefitness.org/resources/everyone/exercise-library/','Exercise library · ACE ↗']},
+ arms:{label:'Arms',title:'Arms',region:'UPPER BODY',overlay:'Arms overlay not available',note:'Arm exercises with 3D motion: curls and pushdowns.',link:['https://www.acefitness.org/resources/everyone/exercise-library/','Exercise library · ACE ↗']},
 };
+// The model has highlight materials only for chest, legs and core.
+export const NO_OVERLAY=['back','shoulders','arms'];
 export const groupFromHash=hash=>{const g=String(hash??'').replace(/^#/,'').toLowerCase();return Object.hasOwn(groups,g)?g:'chest';};
