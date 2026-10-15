@@ -378,3 +378,30 @@ test('rear fly hinges forward and opens the arms sideways',async()=>{
   assert.ok(Math.abs(t.hand[0])>=Math.abs(t.shoulder[0])+.45,`top hand x ${t.hand[0].toFixed(2)}`);
   assert.ok(Math.abs(t.hand[1]-t.shoulder[1])<=.15,`top hand ${(t.hand[1]-t.shoulder[1]).toFixed(2)} from shoulder height`);}
 });
+
+test('curls keep the upper arm at the side',async()=>{
+ const s=await studio();
+ for(const id of [38,39]){s.setExercise(id);standingChecks(s,id);
+  const e0=s1=>elbow(id,0,s1).elbow;
+  for(const u of F){assert.ok(await tilt(id,u)<=5,`${id} u${u} trunk`);
+   for(const s1 of [-1,1]){const a=elbow(id,u,s1),d=Math.hypot(...a.elbow.map((x,i)=>x-e0(s1)[i]));
+    assert.ok(d<=.06,`${id} u${u} elbow drifted ${d.toFixed(3)}`);
+    assert.ok(ang([a.shoulder[0],a.shoulder[1]-1,a.shoulder[2]],a.shoulder,a.elbow)<=15,`${id} u${u} upper arm off vertical`);}
+   if(id===39){s.update(u);s.scene.updateMatrixWorld(true);
+    for(const n of ['L','R'])assert.ok(Math.abs(palmDir(39,u,n).x)>.7,`hammer u${u} ${n} palm not toward the midline`);
+    for(const w of s.weights){const ax=new THREE.Vector3(1,0,0).applyQuaternion(w.getWorldQuaternion(new THREE.Quaternion()));assert.ok(Math.abs(ax.x)<.3,`hammer u${u} handle turned across the body`);}}}
+  for(const s1 of [-1,1]){assert.ok(elbowDeg(id,0,s1)>=160,`${id} bottom elbow ${elbowDeg(id,0,s1).toFixed(0)}°`);
+   assert.ok(elbowDeg(id,.5,s1)<=45,`${id} top elbow ${elbowDeg(id,.5,s1).toFixed(0)}°`);
+   const t=elbow(id,.5,s1);assert.ok(t.hand[2]>t.shoulder[2]&&t.hand[1]>t.shoulder[1]-.25,`${id} top hand not in front of the shoulder`);}}
+ for(const n of ['L','R'])assert.ok(palmDir(38,0,n).z>.7,`curl ${n} palm not forward at the bottom`);
+});
+
+test('curl dumbbells never pass through the body',async()=>{
+ const s=await studio(),m=s.athlete.mesh,body=[];
+ for(let i=0;i<position.count;i+=2)if(!/^[LR]_(Hand|Index|Middle|Ring|Pinky|Thumb|Forearm)/.test(main(i)))body.push(i);
+ for(const id of [38,39]){s.setExercise(id);
+  for(const u of F){s.update(u);s.scene.updateMatrixWorld(true);
+   for(const w of s.weights){let d=Infinity;for(const i of body)d=Math.min(d,toDumbbell(m.getVertexPosition(i,new THREE.Vector3()).applyMatrix4(m.matrixWorld),w));
+    // Brushing the thigh is real; passing into it is not.
+    assert.ok(d>=0,`${id} u${u} dumbbell ${d.toFixed(3)} into the body`);}}}
+});

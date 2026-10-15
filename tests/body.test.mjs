@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {registerHooks} from 'node:module';
 registerHooks({resolve(s,c,n){return s==='three'?{url:new URL('../dist/vendor/three.module.js',import.meta.url).href,shortCircuit:true}:n(s,c);}});
 const {exercises,displayOrder,groups,allIds,GROUP_META,groupFromHash,NO_OVERLAY}=await import('../dist/exercises.js');
-const BODY=[20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37],ANKLE_H=.2;
+const BODY=[20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39],ANKLE_H=.2;
 
 test('legs and abs groups hold six exercises each with complete copy',()=>{
  assert.deepEqual(groups.chest,displayOrder);
@@ -11,6 +11,7 @@ test('legs and abs groups hold six exercises each with complete copy',()=>{
  assert.deepEqual(groups.abs,[26,27,28,29,30,31]);
  assert.deepEqual(groups.back,[32,33,34]);
  assert.deepEqual(groups.shoulders,[35,36,37]);
+ assert.deepEqual(groups.arms,[38,39]);
  assert.deepEqual(allIds,[...displayOrder,...BODY]);
  for(const id of allIds){const e=exercises[id];assert.ok(e,`missing ${id}`);assert.ok(['chest','legs','abs','back','shoulders','arms'].includes(e.group));}
  for(const id of BODY){const e=exercises[id];
