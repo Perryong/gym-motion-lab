@@ -7,7 +7,11 @@ function syncPlay(){$('play').textContent=playing?'Ⅱ':'▶';$('play').setAttri
 export function selectExercise(next){
  if(!Number.isInteger(next)||!allIds.includes(next))throw new Error('Choose an available exercise.');
  id=next;phase=0;group=exercises[id].group;const e=exercises[id],meta=GROUP_META[group];
- $('counter-total').textContent=String(groups[group].length);$('group-label').textContent=meta.label;$('legend-text').textContent=meta.overlay;$('technique-link').href=meta.link[0];$('technique-link').textContent=meta.link[1];
+ $('counter-total').textContent=String(groups[group].length);$('group-label').textContent=meta.label;$('legend-text').textContent=meta.overlay;
+ // The model has no back highlight material, so the Muscles toggle is off and disabled there.
+ const noOverlay=group==='back',btn=$('muscles');btn.disabled=noOverlay;
+ if(noOverlay&&btn.getAttribute('aria-pressed')==='true'){btn.setAttribute('aria-pressed','false');studio?.setMuscles(false);}
+ document.querySelector('.muscle-legend').style.opacity=btn.getAttribute('aria-pressed')==='true'?'1':'.35';$('technique-link').href=meta.link[0];$('technique-link').textContent=meta.link[1];
  $('counter').textContent=String(groups[group].indexOf(id)+1).padStart(2,'0');$('exercise-title').textContent=e.name;$('type-tag').textContent=e.type;$('focus-tag').textContent=e.focus;$('description').textContent=e.desc;
  $('steps').replaceChildren(...e.steps.map(text=>{const li=document.createElement('li');li.textContent=text;return li;}));$('cue-text').textContent=e.cue;$('avoid-text').textContent=e.avoid;
  $('primary-muscle').textContent=e.focus;$('secondary-muscle').textContent=e.secondary;$('breathing-text').replaceChildren(document.createTextNode(e.breath[0]+' '));const span=document.createElement('span');span.textContent=e.breath[1];$('breathing-text').append(span);

@@ -5,7 +5,7 @@ import {exercises,allIds} from './exercises.js';
 import {LIBRARY} from './library.js';
 
 export const GROUPS=[{key:'chest',label:'Chest'},{key:'back',label:'Back'},{key:'shoulders',label:'Shoulders'},{key:'arms',label:'Arms'},{key:'legs',label:'Legs'},{key:'core',label:'Core'}];
-const GROUP_3D={chest:'chest',legs:'legs',abs:'core'};
+const GROUP_3D={chest:'chest',legs:'legs',abs:'core',back:'back'};
 
 const byId=new Map();
 for(const id of allIds){const e=exercises[id];
@@ -15,7 +15,10 @@ for(const e of LIBRARY)byId.set(e.id,{...e,has3d:false});
 export const catalogIds=[...byId.keys()];
 export const exerciseById=id=>byId.get(id)??null;
 export const isExerciseId=id=>byId.has(id);
-export const parseExerciseId=text=>{const s=String(text??'');const id=/^\d+$/.test(s)?Number(s):s;return byId.has(id)?id:null;};
+// Library exercises later given 3D motion: their old ids resolve to the 3D exercise.
+export const ALIASES={L0027:33,L0861:34};
+export const resolveExerciseId=id=>Object.hasOwn(ALIASES,id)?ALIASES[id]:id;
+export const parseExerciseId=text=>{const s=String(text??'');const id=resolveExerciseId(/^\d+$/.test(s)?Number(s):s);return byId.has(id)?id:null;};
 export function filterExercises({group='all',query='',only3d=false}={}){
  const q=query.trim().toLowerCase();
  return catalogIds.filter(id=>{const e=byId.get(id);

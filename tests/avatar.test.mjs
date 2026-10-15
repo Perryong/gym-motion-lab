@@ -9,8 +9,8 @@ test('the published athlete asset is a skinned body with all named clips and val
  const gltf=await new GLTFLoader().parseAsync(b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength),'');
  const surface=gltf.scene.getObjectByName('AthleteSurface'),meshes=[];surface?.traverse(o=>{if(o.isSkinnedMesh)meshes.push(o);});const mesh=meshes[0];
  assert.ok(mesh?.isSkinnedMesh,'athlete must deform with a skeleton');
- const {allIds}=await import('../dist/exercises.js');
- assert.equal(gltf.animations.length,allIds.length);
+ const {bakedIds}=await import('../dist/exercises.js');
+ assert.equal(gltf.animations.length,bakedIds.length);
  assert.ok(mesh.skeleton.bones.some(b=>b.name==='Neck'));
  assert.ok(mesh.skeleton.bones.some(b=>b.name==='R_Index1'));
  const weight=mesh.geometry.getAttribute('skinWeight');
