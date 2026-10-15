@@ -359,3 +359,22 @@ test('lateral raise lifts the arms sideways to shoulder height',async()=>{
   assert.ok(Math.abs(t.hand[0])>=Math.abs(t.shoulder[0])+.4,'top arms out to the side');}
  for(const n of ['L','R'])assert.ok(palmDir(36,.5,n).y<-.7,`${n} palm down at the top`);
 });
+
+test('rear fly hinges forward and opens the arms sideways',async()=>{
+ const s=await studio();s.setExercise(37);standingChecks(s,37);
+ const legs=[];for(let i=0;i<position.count;i++)if(/^[LR]_(Thigh|Shin)$/.test(main(i)))legs.push(i);
+ const a0=poseAt(37,0).ankles;
+ for(const u of F){const p=poseAt(37,u),fromFlat=90-await tilt(37,u);
+  assert.ok(fromFlat>=40&&fromFlat<=55,`fly u${u} trunk ${fromFlat.toFixed(1)}° from horizontal`);
+  for(const b of ['Spine','Chest','ShoulderLine'])for(const x of p.spine[b]??[])assert.ok(Math.abs(x)<=.1,`fly u${u} ${b} bend ${x}`);
+  p.ankles.forEach((x,i)=>assert.ok(Math.hypot(...x.map((v,j)=>v-a0[i][j]))<1e-9,`fly u${u} foot moved`));
+  for(const i of [0,1]){const k=ang([(i?1:-1)*HIP,...p.hip.slice(1)],p.knees[i],p.ankles[i]);assert.ok(k>=150&&k<=175,`fly u${u} knee ${k.toFixed(0)}°`);}
+  for(const s1 of [-1,1]){const e=elbowDeg(37,u,s1);assert.ok(e>=150&&e<=175,`fly u${u} elbow ${e.toFixed(0)}°`);}
+  s.update(u);s.scene.updateMatrixWorld(true);const m=s.athlete.mesh;
+  for(const w of s.weights){assert.ok(w.visible,'two dumbbells');let d=Infinity;for(const i of legs)d=Math.min(d,toDumbbell(m.getVertexPosition(i,new THREE.Vector3()).applyMatrix4(m.matrixWorld),w));
+   assert.ok(d>=.02,`fly u${u} dumbbell ${d.toFixed(3)} from the legs`);}}
+ for(const s1 of [-1,1]){const b=elbow(37,0,s1),t=elbow(37,.5,s1);
+  assert.ok(Math.abs(b.hand[0])<=Math.abs(b.shoulder[0])+.1&&b.shoulder[1]-b.hand[1]>=.5,'bottom hands hang under the chest');
+  assert.ok(Math.abs(t.hand[0])>=Math.abs(t.shoulder[0])+.45,`top hand x ${t.hand[0].toFixed(2)}`);
+  assert.ok(Math.abs(t.hand[1]-t.shoulder[1])<=.15,`top hand ${(t.hand[1]-t.shoulder[1]).toFixed(2)} from shoulder height`);}
+});

@@ -158,5 +158,11 @@ export const BODY_IDS={
  36:u=>{const t=cycleT(u,.5),a=(-80+80*t)*Math.PI/180;
   return pose({t,...upright(),hands:(s,T)=>{const sh=T.shoulder(s);
    return {at:[sh[0]+s*.865*Math.cos(a),sh[1]+.865*Math.sin(a),sh[2]],pole:[0,-.3,-1],palm:[-s*(1-t),-t,0],fingers:'grip'};}});},
+ // Dumbbell rear fly: the bent-over row's hinge; arms arc out sideways from under the chest.
+ 37:u=>{const t=cycleT(u,.5),a=(-85+80*t)*Math.PI/180;
+  return pose({t,hip:[0,ANKLE_HEIGHT+1.146,-.5],pitch:Math.PI/4,focus:[0,1.0,0],ankles:[[-.14,ANKLE_HEIGHT,0],[.14,ANKLE_HEIGHT,0]],
+   hands:(s,T)=>{const sh=T.shoulder(s);
+    const d=[s*Math.cos(a),Math.sin(a),.25*(1-t)],n=.86/Math.hypot(...d);
+    return {at:sh.map((x,i)=>x+d[i]*n),pole:[s,.3,0],palm:[-s*(1-t),-t,0],fingers:'grip'};}});}
 };
 export function bodyPose(id,u){const make=BODY_IDS[id];if(!make)throw new Error('No body pose for '+id);return make(((u%1)+1)%1);}

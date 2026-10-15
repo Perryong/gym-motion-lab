@@ -100,7 +100,7 @@ export class Studio {
    this.rowCable={anchor,handle:this.rod(e,[-.1,0,0],[.1,0,0],.02,m.dark),line:this.mesh(new THREE.CylinderGeometry(.008,.008,1,8),m.chrome,e)};
   }
   if(id===31||id===32){for(const side of [-1,1]){this.rod(e,[side*1.0,.05,-.2],[side*1.0,3.6,-.2],.05,m.metal);this.rod(e,[side*1.0,.05,-.6],[side*1.0,.05,.3],.06,m.metal);}this.pullBar=this.rod(e,[-1,0,0],[1,0,0],.025,m.chrome);}
-  this.weights.forEach(w=>w.visible=[0,1,2,5,7,8,13,21,35,36].includes(id));if(id===5||id===21)this.weights[1].visible=false;
+  this.weights.forEach(w=>w.visible=[0,1,2,5,7,8,13,21,35,36,37].includes(id));if(id===5||id===21)this.weights[1].visible=false;
   this.bar.visible=[4,17,20,23,33].includes(id);this.plate.visible=[10,29].includes(id);this.ball.visible=id===12;
   this.athlete.setMuscles(!!this.highlight,exercises[id].group);
   this.update(0);this.view('perspective');
