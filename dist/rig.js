@@ -67,6 +67,8 @@ export function applyRigPose(group,map,id,phase){
   else if(p.body)qFoot=new THREE.Quaternion().setFromAxisAngle(X,p.footPitch[i]);
   orient(map[n+'_Foot'],qFoot,space);
   let x=V([1,0,0]),y=V(hand).sub(V(elbow)).normalize();
+  // Body poses may bend the wrist by giving the finger direction.
+  if(p.body&&p.hands(side).dir)y=V(p.hands(side).dir).normalize();
   const open=(p.prone&&id!==19)||(id===12&&phase%1>=.22&&phase%1<.83),plate=id===10;
   const mode=p.body?p.hands(side).fingers:cableGrip?'cable':relaxed?'relaxed':open?'open':plate?'plate':'grip';
   if(p.body){

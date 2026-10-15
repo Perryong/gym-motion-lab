@@ -89,6 +89,15 @@ for(let i=0;i<position.count;i++){const n=main(i);if(/^L_(Index|Middle)3$/.test(
 const world=i=>mesh.getVertexPosition(i,new THREE.Vector3()).applyMatrix4(mesh.matrixWorld);
 const nearestTorso=p=>{let d=Infinity;for(let k=0;k<torso.length;k+=3)d=Math.min(d,world(torso[k]).distanceTo(p));return d;};
 
+// Height of a bone point above the torso skin under it, in the upper trunk's frame (+Z out of the chest).
+function aboveSkin(p,inv,T){let s=-Infinity;for(const q of T)if(Math.hypot(q.x-p.x,q.y-p.y)<.04)s=Math.max(s,q.z);return p.z-s;}
+test('crunch forearms lie on top of the chest, not inside it',()=>{
+ for(const u of [0,.25,.5,.75]){athlete.update(26,u);athlete.group.updateMatrixWorld(true);
+  const inv=athlete.map.ShoulderLine.matrixWorld.clone().invert(),T=torso.map(i=>world(i).applyMatrix4(inv));
+  for(const n of ['L','R']){const e=athlete.map[n+'_Forearm'].getWorldPosition(new THREE.Vector3()).applyMatrix4(inv),w=athlete.map[n+'_Hand'].getWorldPosition(new THREE.Vector3()).applyMatrix4(inv);
+   for(const k of [.25,.5,.75,1]){const d=aboveSkin(e.clone().lerp(w,k),inv,T);if(d>-Infinity&&d<Infinity)assert.ok(d>=.02,`crunch u${u} ${n} forearm ${k} is ${d.toFixed(3)} from the chest skin`);}}}
+});
+
 test('crunch hands lie crossed on the chest, fingertips not past the shoulders',()=>{
  for(const u of [0,.25,.5,.75]){athlete.update(26,u);athlete.group.updateMatrixWorld(true);
   const inv=athlete.map.ShoulderLine.matrixWorld.clone().invert();
@@ -284,4 +293,23 @@ test('seated cable row knees stay up, nothing passes through the bench, footplat
   const [c0,c1]=(m=>{const c=m.getWorldPosition(new THREE.Vector3()),ax=new THREE.Vector3(0,1,0).applyQuaternion(m.getWorldQuaternion(new THREE.Quaternion())).multiplyScalar(m.scale.y/2);return [c.clone().sub(ax),c.clone().add(ax)];})(s.rowCable.line);
   for(let k=0;k<=50;k++){const q=c0.clone().lerp(c1,k/50);for(const pad of ROW_PADS){const inside=Math.abs(q.x-pad.x)<pad.w/2&&q.y>pad.y0&&q.y<pad.y1&&q.z>ROW_PLATE_Z-.005&&q.z<ROW_PLATE_Z+.055;assert.ok(!inside,`u${u} cable passes through the footplate`);}}
  }
+});
+
+test('goblet squat cups the top bell of an upright dumbbell against the chest',async()=>{
+ const {GRIP}=await import('../dist/scene.js'),s=await studio();s.setExercise(21);
+ const m=s.athlete.mesh,up=new THREE.Vector3(0,1,0);
+ for(const u of [0,.25,.5,.75]){s.update(u);s.scene.updateMatrixWorld(true);
+  const w=s.weights[0],c=w.getWorldPosition(new THREE.Vector3()),axis=new THREE.Vector3(1,0,0).applyQuaternion(w.getWorldQuaternion(new THREE.Quaternion()));
+  assert.ok(Math.abs(axis.y)>=Math.cos(15*Math.PI/180),`goblet u${u} dumbbell tilted ${(Math.acos(Math.abs(axis.y))*180/Math.PI).toFixed(0)}°`);
+  const top=c.clone().addScaledVector(axis,.16*Math.sign(axis.y));
+  for(const n of ['L','R']){const p=s.athlete.map[n+'_Hand'].localToWorld(new THREE.Vector3(...GRIP)),below=top.y-p.y,off=Math.hypot(p.x-top.x,p.z-top.z);
+   assert.ok(below>=.07&&below<=.16,`goblet u${u} ${n} grip ${below.toFixed(3)} below the top bell centre`);
+   assert.ok(off<=.12,`goblet u${u} ${n} grip ${off.toFixed(3)} out from under the bell`);
+   assert.ok(s.athlete.map[n+'_Forearm'].getWorldPosition(new THREE.Vector3()).y<p.y,`goblet u${u} ${n} elbow above the hand`);}
+  const inv=s.athlete.map.ShoulderLine.matrixWorld.clone().invert(),h=top.clone().applyMatrix4(inv).y;
+  assert.ok(h>=-.32&&h<=-.05,`goblet u${u} top bell ${h.toFixed(3)} from the shoulder line`);
+  // Gap from the dumbbell's surface to the torso skin within its height.
+  let gap=Infinity;for(const i of torso){const q=m.getVertexPosition(i,new THREE.Vector3()).applyMatrix4(m.matrixWorld),t=q.clone().sub(c).dot(axis);
+   if(Math.abs(t)<=.22)gap=Math.min(gap,q.clone().sub(c).addScaledVector(axis,-t).length()-.135);}
+  assert.ok(gap>=-.012&&gap<=.04,`goblet u${u} dumbbell ${gap.toFixed(3)} from the chest`);}
 });

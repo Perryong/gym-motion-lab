@@ -112,6 +112,8 @@ export class Studio {
   const both=palm(-1).add(palm(1)).multiplyScalar(.5),rootQ=this.root.getWorldQuaternion(new THREE.Quaternion()).invert();
   this.weights.forEach((w,i)=>{const s=i===0?-1:1;w.position.copy(palm(s));w.quaternion.copy(rootQ).multiply(bone(s).getWorldQuaternion(new THREE.Quaternion()));
    if(this.id===5||this.id===21){w.position.copy(both);w.rotation.set(0,0,Math.PI/2);}
+   // Goblet: the top bell rests in the cupped palms, so the dumbbell hangs below the grips.
+   if(this.id===21)w.position.y-=.06;
   });
   if([4,17,20,23,33].includes(this.id)){this.bar.position.set(0,both.y,both.z);}
   this.root.updateMatrixWorld(true);

@@ -36,7 +36,7 @@ function pose({t=0,hip,pitch=0,spine={},nod,hands,ankles,knee,feet='floor',footP
  const T=trunk(hip,pitch,spine),h=s=>hands(s,T);
  return {t,body:true,prone:false,root:[0,0,0],rotation:0,hip,pitch,spine,nod,feet,footPitch,focus,neck:T.neck,
   arms:s=>{const x=h(s);return {shoulder:T.shoulder(s),hand:x.at,pole:x.pole};},
-  hands:s=>{const x=h(s);return {palm:x.palm,fingers:x.fingers};},
+  hands:s=>{const x=h(s);return {palm:x.palm,fingers:x.fingers,dir:x.dir};},
   ankles,knees:solveKnees(hip,ankles,knee??T.forward)};
 }
 // Lying on the back: arms nearly straight along the sides, palms flat on the mat.
@@ -49,11 +49,12 @@ export const BODY_IDS={
   return pose({t,hip:[0,stand()-.56*t,-.32*t],pitch:.62*t,focus:[0,1.1,0],
    ankles:[[-.2,ANKLE_HEIGHT,.02],[.2,ANKLE_HEIGHT,.02]],
    hands:(s,T)=>({at:add(T.at([0,-.1,-.16]),[s*.5,0,0]),pole:[s*.4,-1,-.4],palm:T.dir([0,0,1]),fingers:'grip'})});},
- // Goblet squat: same leg pattern, more upright; one dumbbell held at the chest.
+ // Goblet squat: same leg pattern, more upright; one dumbbell held upright against the chest.
  21:u=>{const t=cycleT(u,.56);
   return pose({t,hip:[0,stand()-.56*t,-.28*t],pitch:.35*t,focus:[0,1.1,0],
    ankles:[[-.2,ANKLE_HEIGHT,.02],[.2,ANKLE_HEIGHT,.02]],
-   hands:(s,T)=>({at:T.at([s*.07,-.22,.34]),pole:[s*.3,-1,.3],palm:T.dir([-s,0,0]),fingers:'grip'})});},
+   // Palms up under the top bell, fingers forward around its rim, elbows down.
+   hands:(s,T)=>({at:T.at([s*.06,-.28,.25]),pole:T.dir([s*.3,-1,.3]),palm:T.dir([-s*.2,1,.2]),dir:T.dir([-s*.3,.2,1]),fingers:'grip'})});},
  // Walking lunge: two alternating steps of L, then a labelled glide back.
  // Stride ≈ thigh + shin, so the back thigh can drop vertical with the knee near the floor.
  22:u=>{const L=1.2,step=.42,feet=[[-.14,0],[.14,0]];let hipZ,depth=0,trailPitch=[0,0];
@@ -88,8 +89,8 @@ export const BODY_IDS={
  26:u=>{const t=cycleT(u,.5);
   return pose({t,hip:[0,SEAT,0],pitch:SUPINE,spine:{Spine:[.15*t],Chest:[.25*t],ShoulderLine:[.2*t]},nod:[.25*t],focus:[0,.4,-.1],
    ankles:[[-.15,ANKLE_HEIGHT+MAT,.75],[.15,ANKLE_HEIGHT+MAT,.75]],
-   // Arms crossed on the chest: wrists below the shoulder line, fingers toward the opposite collarbone.
-   hands:(s,T)=>({at:T.at([-s*.1,-.2,.13]),pole:T.dir([s*.6,-1,.1]),palm:T.dir([0,0,-1]),fingers:'relaxed'})});},
+   // Arms crossed on the chest: forearms resting on the ribs, wrists bent so the fingers lie on the opposite shoulder.
+   hands:(s,T)=>({at:T.at([-s*.1,-.16,.28]),pole:T.dir([s*.5,-1,.8]),palm:T.dir([0,0,-1]),dir:T.dir([-s*.7,.6,-.4]),fingers:'relaxed'})});},
  // Forearm plank: straight line from toes to shoulders; a slow breath is the cycle.
  27:u=>{const b=Math.sin(2*Math.PI*u),S=[0,.53,.9],toe=toeDepth(1.1)+MAT+.01,beta=Math.asin((S[1]-toe)/(LEG+.8)),pitch=Math.PI/2-beta,spine={Chest:[.02*b]};
   const hip=hipFor(S,pitch,spine),up=[0,Math.sin(beta),Math.cos(beta)];
