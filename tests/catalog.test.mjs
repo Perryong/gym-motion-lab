@@ -51,7 +51,9 @@ test('routes keep old links working and send bad exercise ids to the list',()=>{
 });
 
 test('replaced library ids resolve to their 3D exercises',()=>{
- assert.deepEqual(ALIASES,{L0027:33,L0861:34});
+ assert.deepEqual(ALIASES,{L0027:33,L0861:34,L0426:35,L0334:36,L0378:37,L0294:38,L0313:39,L0201:40});
+ for(const [from,to] of Object.entries(ALIASES))assert.equal(resolveExerciseId(from),to);
+ assert.deepEqual(routeFor('#exercise/L0201'),['exercise',40]);
  assert.equal(resolveExerciseId('L0027'),33);assert.equal(resolveExerciseId('L0861'),34);assert.equal(resolveExerciseId(4),4);assert.equal(resolveExerciseId('L9999'),'L9999');
  assert.deepEqual(routeFor('#exercise/L0861'),['exercise',34]);assert.deepEqual(routeFor('#exercise/L0027'),['exercise',33]);
  assert.equal(parseExerciseId('L0027'),33);

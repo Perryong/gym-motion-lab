@@ -14,6 +14,8 @@ export const stand=()=>ANKLE_HEIGHT+LEG*.995,MAT=.045,BACK=.185;
 // trunk tilts head-down slightly and the head, shoulder blades and seat all touch the mat.
 // Seated cable row: bench top height, shared with scene.js.
 export const ROW_SEAT=.45;
+// Cable triceps pushdown: the high pulley in front of the athlete, shared with scene.js.
+export const PUSH_PULLEY=[0,2.1,.85];
 // Footplate face (where the soles press) and its two pads, one per foot, leaving a gap
 // at x=0 for the cable. Measured from the shoe with the soles turned to face the plate.
 export const ROW_PLATE_Z=1.38,ROW_PADS=[-1,1].map(s=>({x:s*.155,w:.25,y0:.4,y1:.97}));
@@ -43,6 +45,12 @@ function pose({t=0,hip,pitch=0,spine={},nod,hands,ankles,knee,feet='floor',footP
 const alongside=(s,T)=>({at:[s*.45,MAT+.12,T.shoulder(s)[2]+.8],pole:[s,0,0],palm:[0,-1,0],fingers:'open'});
 const hang=(s,T)=>({at:add(T.shoulder(s),[s*.06,-.82,.04]),pole:[s*.2,0,-1],palm:[-s,0,0],fingers:'relaxed'});
 
+// Standing tall with straight legs, feet under the hips.
+const upright=(extra={})=>({hip:[0,stand(),0],ankles:[-1,1].map(s=>[s*HIP,ANKLE_HEIGHT,0]),focus:[0,1.25,0],...extra});
+// Standing curl: upper arm hangs `fwd`° forward and `wide` out so the dumbbell clears the thigh; forearm swings from `f0` to 150° of flexion.
+function curl(u,palm,wide,f0,fwd=5){const t=cycleT(u,.5),f=(f0+(150-f0)*t)*Math.PI/180,up=fwd*Math.PI/180;
+ return pose({t,...upright(),hands:(s,T)=>{const sh=T.shoulder(s),d=[s*wide,-Math.cos(up),Math.sin(up)],n=.44/Math.hypot(...d),el=sh.map((x,i)=>x+d[i]*n),at=[el[0],el[1]-.44*Math.cos(f),el[2]+.44*Math.sin(f)];
+  return {at,pole:el.map((x,i)=>x-(sh[i]+at[i])/2),palm:palm(s,f),fingers:'grip'};}});}
 export const BODY_IDS={
  // Barbell back squat: hips sit down and back, trunk leans up to ~36°.
  20:u=>{const t=cycleT(u,.56);
@@ -147,6 +155,28 @@ export const BODY_IDS={
   // knee pole up: the default (trunk forward) is nearly parallel to hip→ankle here and flips.
   return pose({t,hip,pitch,knee:[0,1,0],focus:[0,.9,.5],footPitch:[-Math.PI/2,-Math.PI/2],
    ankles:[-1,1].map(s=>[s*HIP,.55,1.18]),
-   hands:(s,T)=>{const sh=T.shoulder(s);return {at:lerp([s*.12,sh[1]-.28,sh[2]+.78],[s*.12,belly[1],belly[2]]),pole:[s*.4,-.2,-1],palm:[-s,0,0],fingers:'grip'};}});}
+   hands:(s,T)=>{const sh=T.shoulder(s);return {at:lerp([s*.12,sh[1]-.28,sh[2]+.78],[s*.12,belly[1],belly[2]]),pole:[s*.4,-.2,-1],palm:[-s,0,0],fingers:'grip'};}});},
+ // Dumbbell overhead press: elbows bent under the wrists with the dumbbells by the ears, pressed up and in to nearly straight arms.
+ 35:u=>{const t=cycleT(u,.5);
+  return pose({t,...upright(),hands:(s,T)=>{const sh=T.shoulder(s),lo=[s*.737,sh[1]+.29,sh[2]+.145],hi=[s*.44,sh[1]+.865,sh[2]];
+   return {at:lo.map((x,i)=>x+(hi[i]-x)*(i?t:t*t)),pole:[s,-.4,.3],palm:[0,0,1],fingers:'grip'};}});},
+ // Dumbbell lateral raise: arms sweep up in the side plane from the thighs to shoulder height.
+ 36:u=>{const t=cycleT(u,.5),a=(-80+80*t)*Math.PI/180;
+  return pose({t,...upright(),hands:(s,T)=>{const sh=T.shoulder(s);
+   return {at:[sh[0]+s*.865*Math.cos(a),sh[1]+.865*Math.sin(a),sh[2]],pole:[0,-.3,-1],palm:[-s*(1-t),-t,0],fingers:'grip'};}});},
+ // Dumbbell rear fly: the bent-over row's hinge; arms arc out sideways from under the chest.
+ 37:u=>{const t=cycleT(u,.5),a=(-85+80*t)*Math.PI/180;
+  return pose({t,hip:[0,ANKLE_HEIGHT+1.146,-.5],pitch:Math.PI/4,focus:[0,1.0,0],ankles:[[-.14,ANKLE_HEIGHT,0],[.14,ANKLE_HEIGHT,0]],
+   hands:(s,T)=>{const sh=T.shoulder(s);
+    const d=[s*Math.cos(a),Math.sin(a),.25*(1-t)],n=.86/Math.hypot(...d);
+    return {at:sh.map((x,i)=>x+d[i]*n),pole:[s,.3,0],palm:[-s*(1-t),-t,0],fingers:'grip'};}});},
+ // Curls: the elbow stays fixed just in front of the hip line and the forearm hinges about it.
+ 38:u=>curl(u,(s,f)=>[0,Math.sin(f),Math.cos(f)],.1,24),
+ // Hammer curl: the same hinge with the palms facing each other.
+ 39:u=>curl(u,s=>[-s,0,-.2],.18,20,11),
+ // Cable triceps pushdown: slight forward lean, elbows pinned at the sides, forearms hinge from level to straight.
+ 40:u=>{const t=cycleT(u,.5),f=(100-80*t)*Math.PI/180;
+  return pose({t,...upright(),pitch:.12,hands:(s,T)=>{const sh=T.shoulder(s),d=[s*.08,-1,.1],n=.44/Math.hypot(...d),el=sh.map((x,i)=>x+d[i]*n),at=[el[0],el[1]-.44*Math.cos(f),el[2]+.44*Math.sin(f)];
+   return {at,pole:el.map((x,i)=>x-(sh[i]+at[i])/2),palm:[0,-Math.sin(f),-Math.cos(f)],fingers:'grip'};}});}
 };
 export function bodyPose(id,u){const make=BODY_IDS[id];if(!make)throw new Error('No body pose for '+id);return make(((u%1)+1)%1);}

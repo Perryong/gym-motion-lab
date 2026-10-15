@@ -113,3 +113,13 @@ test('saved data and backups with replaced library ids carry over to the 3D exer
  assert.deepEqual(n.active.entries.map(e=>e.id),[34]);
  assert.deepEqual(readBackup(JSON.stringify({app:'form-gym',version:1,data:raw})).history[0].entries.map(e=>e.id),[33,34]);
 });
+
+test('saved shoulder and arm library entries carry over to their 3D exercises',async()=>{
+ const {readBackup}=await import('../dist/store.js');
+ const raw={plan:{tue:{name:'Arms',items:[{id:'L0294',sets:3,reps:10},{id:'L0201',sets:3,reps:12},{id:'L0426',sets:4,reps:8}]}},
+  history:[{day:'tue',name:'Arms',started:1,finished:2,entries:[{id:'L0294',sets:[{kg:12,reps:10,done:true},{kg:12,reps:9,done:true}]},{id:'L0334',sets:[{kg:8,reps:12,done:true}]}]}]};
+ const n=normalize(JSON.stringify(raw));
+ assert.deepEqual(n.plan.tue.items.map(i=>i.id),[38,40,35]);
+ assert.deepEqual(n.history[0].entries,[{id:38,sets:[{kg:12,reps:10,done:true},{kg:12,reps:9,done:true}]},{id:36,sets:[{kg:8,reps:12,done:true}]}]);
+ assert.deepEqual(readBackup(JSON.stringify({app:'form-gym',version:1,data:raw})).plan.tue.items.map(i=>i.id),[38,40,35]);
+});

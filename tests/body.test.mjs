@@ -2,28 +2,37 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {registerHooks} from 'node:module';
 registerHooks({resolve(s,c,n){return s==='three'?{url:new URL('../dist/vendor/three.module.js',import.meta.url).href,shortCircuit:true}:n(s,c);}});
-const {exercises,displayOrder,groups,allIds,GROUP_META,groupFromHash}=await import('../dist/exercises.js');
-const BODY=[20,21,22,23,24,25,26,27,28,29,30,31,32,33,34],ANKLE_H=.2;
+const {exercises,displayOrder,groups,allIds,GROUP_META,groupFromHash,NO_OVERLAY}=await import('../dist/exercises.js');
+const BODY=[20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40],ANKLE_H=.2;
 
 test('legs and abs groups hold six exercises each with complete copy',()=>{
  assert.deepEqual(groups.chest,displayOrder);
  assert.deepEqual(groups.legs,[20,21,22,23,24,25]);
  assert.deepEqual(groups.abs,[26,27,28,29,30,31]);
  assert.deepEqual(groups.back,[32,33,34]);
+ assert.deepEqual(groups.shoulders,[35,36,37]);
+ assert.deepEqual(groups.arms,[38,39,40]);
  assert.deepEqual(allIds,[...displayOrder,...BODY]);
- for(const id of allIds){const e=exercises[id];assert.ok(e,`missing ${id}`);assert.ok(['chest','legs','abs','back'].includes(e.group));}
+ for(const id of allIds){const e=exercises[id];assert.ok(e,`missing ${id}`);assert.ok(['chest','legs','abs','back','shoulders','arms'].includes(e.group));}
  for(const id of BODY){const e=exercises[id];
   for(const key of ['name','short','equipment','type','focus','secondary','desc','cue','avoid'])assert.ok(typeof e[key]==='string'&&e[key].length>2,`${id} ${key}`);
   assert.equal(e.steps.length,3);assert.equal(e.breath.length,2);assert.equal(e.stance.length,2);
   assert.equal(e.labels[0][0],0);for(let i=1;i<e.labels.length;i++)assert.ok(e.labels[i][0]>e.labels[i-1][0]&&e.labels[i][0]<1);
  }
- for(const g of ['chest','legs','abs','back'])assert.ok(GROUP_META[g].title&&GROUP_META[g].link[0].startsWith('https://'));
+ for(const g of ['chest','legs','abs','back','shoulders','arms'])assert.ok(GROUP_META[g].title&&GROUP_META[g].link[0].startsWith('https://'));
+});
+
+test('groups without a muscle overlay say so and disable the toggle',()=>{
+ assert.deepEqual(NO_OVERLAY,['back','shoulders','arms']);
+ assert.equal(GROUP_META.shoulders.overlay,'Shoulders overlay not available');
+ assert.equal(GROUP_META.arms.overlay,'Arms overlay not available');
+ for(const g of NO_OVERLAY)assert.equal(GROUP_META[g].overlay,`${GROUP_META[g].title} overlay not available`);
 });
 
 test('group hash parsing is case-insensitive and falls back to chest',()=>{
  assert.equal(groupFromHash('#legs'),'legs');assert.equal(groupFromHash('#Legs'),'legs');assert.equal(groupFromHash('ABS'),'abs');
- assert.equal(groupFromHash('#back'),'back');
- for(const h of ['','#','#arms','#toString',undefined,null])assert.equal(groupFromHash(h),'chest');
+ assert.equal(groupFromHash('#back'),'back');assert.equal(groupFromHash('#arms'),'arms');assert.equal(groupFromHash('#shoulders'),'shoulders');
+ for(const h of ['','#','#calves','#toString',undefined,null])assert.equal(groupFromHash(h),'chest');
 });
 
 const THREE=await import('../dist/vendor/three.module.js');

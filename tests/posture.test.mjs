@@ -313,3 +313,128 @@ test('goblet squat cups the top bell of an upright dumbbell against the chest',a
    if(Math.abs(t)<=.22)gap=Math.min(gap,q.clone().sub(c).addScaledVector(axis,-t).length()-.135);}
   assert.ok(gap>=-.012&&gap<=.04,`goblet u${u} dumbbell ${gap.toFixed(3)} from the chest`);}
 });
+
+// Shoulders and arms: shared checks for standing dumbbell and cable exercises.
+const ang=(a,b,c)=>{const u=a.map((x,i)=>x-b[i]),w=c.map((x,i)=>x-b[i]);return Math.acos(Math.min(1,u.reduce((n,x,i)=>n+x*w[i],0)/Math.hypot(...u)/Math.hypot(...w)))*180/Math.PI;};
+const elbowDeg=(id,u,s)=>{const a=elbow(id,u,s);return ang(a.shoulder,a.elbow,a.hand);};
+// Trunk tilt from vertical, hip to the shoulder-line centre.
+async function tilt(id,u){const {trunk}=await import('../dist/motion-body.js'),p=poseAt(id,u),c=trunk(p.hip,p.pitch,p.spine).center,d=c.map((x,i)=>x-p.hip[i]);return Math.acos(d[1]/Math.hypot(...d))*180/Math.PI;}
+function standingChecks(s,id){for(const u of F){s.update(u);const c=shoeContact(s);
+ assert.ok(c.gap>-.012&&c.gap<.015,`${id} u${u} shoes ${c.gap.toFixed(3)} from the floor`);
+ assert.ok(clearance(id,u)>-.012-MAT,`${id} u${u} skin below the floor`);}}
+// Palm normal (hand-bone +Z) in world space.
+const palmDir=(id,u,n)=>{athlete.update(id,u);athlete.group.updateMatrixWorld(true);return new THREE.Vector3(0,0,1).applyQuaternion(athlete.map[n+'_Hand'].getWorldQuaternion(new THREE.Quaternion()));};
+// Distance from a point to a dumbbell, bounded as a flat-ended cylinder (length .44, plate radius .135).
+function toDumbbell(q,w){const c=w.getWorldPosition(new THREE.Vector3()),a=new THREE.Vector3(1,0,0).applyQuaternion(w.getWorldQuaternion(new THREE.Quaternion()));
+ const d=q.clone().sub(c),t=d.dot(a),r=d.addScaledVector(a,-t).length(),ax=Math.abs(t)-.22,rad=r-.135;
+ return ax>0||rad>0?Math.hypot(Math.max(0,ax),Math.max(0,rad)):Math.max(ax,rad);}
+
+test('overhead press presses from the shoulders to straight arms over the head',async()=>{
+ const s=await studio();s.setExercise(35);standingChecks(s,35);
+ for(const u of F){assert.ok(await tilt(35,u)<=8,`press u${u} trunk ${(await tilt(35,u)).toFixed(1)}°`);
+  s.update(u);s.scene.updateMatrixWorld(true);const m=s.athlete.mesh;
+  for(const w of s.weights){assert.ok(w.visible,'two dumbbells');let d=Infinity;for(const i of region.head)d=Math.min(d,toDumbbell(m.getVertexPosition(i,new THREE.Vector3()).applyMatrix4(m.matrixWorld),w));
+   assert.ok(d>=.03,`press u${u} head ${d.toFixed(3)} from a dumbbell`);}}
+ for(const s1 of [-1,1]){const b=elbow(35,0,s1),t=elbow(35,.5,s1);
+  // Bottom: elbow bent near a right angle under the wrist, dumbbells by the ears.
+  const lift=b.hand[1]-b.shoulder[1],eb=elbowDeg(35,0,s1);
+  assert.ok(lift>=.1&&lift<=.35,`bottom hand ${lift.toFixed(2)} above the shoulder`);
+  assert.ok(eb>=60&&eb<=100,`bottom elbow ${eb.toFixed(0)}°`);
+  for(const u of F){const a=elbow(35,u,s1),lean=ang([a.elbow[0],a.elbow[1]+1,a.elbow[2]],a.elbow,a.hand);
+   assert.ok(lean<=20,`press u${u} forearm ${lean.toFixed(0)}° off vertical`);
+   assert.ok(a.elbow[1]<a.hand[1],`press u${u} elbow above the hand`);
+   athlete.update(35,u);athlete.group.updateMatrixWorld(true);const n=s1<0?'L':'R',h=athlete.map[n+'_Hand'],fore=h.getWorldPosition(new THREE.Vector3()).sub(athlete.map[n+'_Forearm'].getWorldPosition(new THREE.Vector3())).normalize(),fingers=new THREE.Vector3(0,1,0).applyQuaternion(h.getWorldQuaternion(new THREE.Quaternion()));
+   assert.ok(fore.angleTo(fingers)*180/Math.PI<=30,`press u${u} ${n} wrist bent ${(fore.angleTo(fingers)*180/Math.PI).toFixed(0)}°`);}
+  assert.ok(elbowDeg(35,.5,s1)>=160,`top elbow ${elbowDeg(35,.5,s1).toFixed(0)}°`);
+  assert.ok(t.hand[1]-t.shoulder[1]>=.35,'top hands over the head');
+  assert.ok(Math.abs(t.hand[0])>=Math.abs(t.shoulder[0])&&Math.abs(t.hand[0])<=Math.abs(t.shoulder[0])+.15,`top hand x ${t.hand[0].toFixed(2)}`);}
+});
+
+test('lateral raise lifts the arms sideways to shoulder height',async()=>{
+ const s=await studio();s.setExercise(36);standingChecks(s,36);const h0=poseAt(36,0).hip;
+ for(const u of F){assert.ok(await tilt(36,u)<=5,`raise u${u} trunk`);
+  assert.ok(Math.hypot(...poseAt(36,u).hip.map((x,i)=>x-h0[i]))<=.01,`raise u${u} hips moved`);
+  for(const s1 of [-1,1]){const a=elbow(36,u,s1),e=elbowDeg(36,u,s1);
+   assert.ok(e>=150&&e<=175,`raise u${u} elbow ${e.toFixed(0)}°`);
+   assert.ok(a.hand[1]<=a.shoulder[1]+.02,`raise u${u} hand above the shoulder`);
+   assert.ok(Math.abs(a.hand[2]-a.shoulder[2])<=.25,`raise u${u} hand ${(a.hand[2]-a.shoulder[2]).toFixed(2)} out of the side plane`);}}
+ const hip=poseAt(36,0).hip;
+ for(const s1 of [-1,1]){const b=elbow(36,0,s1),t=elbow(36,.5,s1);
+  assert.ok(Math.abs(b.hand[0])>=.15&&b.hand[1]<hip[1],'bottom hands beside the thighs');
+  assert.ok(Math.abs(t.hand[1]-t.shoulder[1])<=.08,`top hand ${(t.hand[1]-t.shoulder[1]).toFixed(2)} from shoulder height`);
+  assert.ok(Math.abs(t.hand[0])>=Math.abs(t.shoulder[0])+.4,'top arms out to the side');}
+ for(const n of ['L','R'])assert.ok(palmDir(36,.5,n).y<-.7,`${n} palm down at the top`);
+});
+
+test('rear fly hinges forward and opens the arms sideways',async()=>{
+ const s=await studio();s.setExercise(37);standingChecks(s,37);
+ const legs=[];for(let i=0;i<position.count;i++)if(/^[LR]_(Thigh|Shin)$/.test(main(i)))legs.push(i);
+ const a0=poseAt(37,0).ankles;
+ for(const u of F){const p=poseAt(37,u),fromFlat=90-await tilt(37,u);
+  assert.ok(fromFlat>=40&&fromFlat<=55,`fly u${u} trunk ${fromFlat.toFixed(1)}° from horizontal`);
+  for(const b of ['Spine','Chest','ShoulderLine'])for(const x of p.spine[b]??[])assert.ok(Math.abs(x)<=.1,`fly u${u} ${b} bend ${x}`);
+  p.ankles.forEach((x,i)=>assert.ok(Math.hypot(...x.map((v,j)=>v-a0[i][j]))<1e-9,`fly u${u} foot moved`));
+  for(const i of [0,1]){const k=ang([(i?1:-1)*HIP,...p.hip.slice(1)],p.knees[i],p.ankles[i]);assert.ok(k>=150&&k<=175,`fly u${u} knee ${k.toFixed(0)}°`);}
+  for(const s1 of [-1,1]){const e=elbowDeg(37,u,s1);assert.ok(e>=150&&e<=175,`fly u${u} elbow ${e.toFixed(0)}°`);}
+  s.update(u);s.scene.updateMatrixWorld(true);const m=s.athlete.mesh;
+  for(const w of s.weights){assert.ok(w.visible,'two dumbbells');let d=Infinity;for(const i of legs)d=Math.min(d,toDumbbell(m.getVertexPosition(i,new THREE.Vector3()).applyMatrix4(m.matrixWorld),w));
+   assert.ok(d>=.02,`fly u${u} dumbbell ${d.toFixed(3)} from the legs`);}}
+ for(const s1 of [-1,1]){const b=elbow(37,0,s1),t=elbow(37,.5,s1);
+  assert.ok(Math.abs(b.hand[0])<=Math.abs(b.shoulder[0])+.1&&b.shoulder[1]-b.hand[1]>=.5,'bottom hands hang under the chest');
+  assert.ok(Math.abs(t.hand[0])>=Math.abs(t.shoulder[0])+.45,`top hand x ${t.hand[0].toFixed(2)}`);
+  assert.ok(Math.abs(t.hand[1]-t.shoulder[1])<=.15,`top hand ${(t.hand[1]-t.shoulder[1]).toFixed(2)} from shoulder height`);}
+});
+
+test('curls keep the upper arm at the side',async()=>{
+ const s=await studio();
+ for(const id of [38,39]){s.setExercise(id);standingChecks(s,id);
+  const e0=s1=>elbow(id,0,s1).elbow;
+  for(const u of F){assert.ok(await tilt(id,u)<=5,`${id} u${u} trunk`);
+   for(const s1 of [-1,1]){const a=elbow(id,u,s1),d=Math.hypot(...a.elbow.map((x,i)=>x-e0(s1)[i]));
+    assert.ok(d<=.06,`${id} u${u} elbow drifted ${d.toFixed(3)}`);
+    assert.ok(ang([a.shoulder[0],a.shoulder[1]-1,a.shoulder[2]],a.shoulder,a.elbow)<=15,`${id} u${u} upper arm off vertical`);}
+   if(id===39){s.update(u);s.scene.updateMatrixWorld(true);
+    for(const n of ['L','R'])assert.ok(Math.abs(palmDir(39,u,n).x)>.7,`hammer u${u} ${n} palm not toward the midline`);
+    for(const w of s.weights){const ax=new THREE.Vector3(1,0,0).applyQuaternion(w.getWorldQuaternion(new THREE.Quaternion()));assert.ok(Math.abs(ax.x)<.3,`hammer u${u} handle turned across the body`);}}}
+  for(const s1 of [-1,1]){assert.ok(elbowDeg(id,0,s1)>=160,`${id} bottom elbow ${elbowDeg(id,0,s1).toFixed(0)}°`);
+   assert.ok(elbowDeg(id,.5,s1)<=45,`${id} top elbow ${elbowDeg(id,.5,s1).toFixed(0)}°`);
+   const t=elbow(id,.5,s1);assert.ok(t.hand[2]>t.shoulder[2]&&t.hand[1]>t.shoulder[1]-.25,`${id} top hand not in front of the shoulder`);}}
+ for(const n of ['L','R'])assert.ok(palmDir(38,0,n).z>.7,`curl ${n} palm not forward at the bottom`);
+});
+
+test('curl dumbbells never pass through the body',async()=>{
+ const s=await studio(),m=s.athlete.mesh,body=[];
+ for(let i=0;i<position.count;i++)if(!/^[LR]_(Hand|Index|Middle|Ring|Pinky|Thumb|Forearm)/.test(main(i)))body.push(i);
+ for(const id of [38,39]){s.setExercise(id);
+  for(const u of F){s.update(u);s.scene.updateMatrixWorld(true);
+   for(const w of s.weights){let d=Infinity;for(const i of body)d=Math.min(d,toDumbbell(m.getVertexPosition(i,new THREE.Vector3()).applyMatrix4(m.matrixWorld),w));
+    // Brushing the thigh is real; passing into it is not.
+    assert.ok(d>=0,`${id} u${u} dumbbell ${d.toFixed(3)} into the body`);}}}
+});
+
+test('triceps pushdown keeps the elbows pinned and runs the cable from a high pulley',async()=>{
+ const {GRIP}=await import('../dist/scene.js'),{PUSH_PULLEY}=await import('../dist/motion-body.js'),s=await studio();s.setExercise(40);standingChecks(s,40);
+ assert.ok(s.pushCable,'pushdown equipment');
+ const ends=m=>{const c=m.getWorldPosition(new THREE.Vector3()),ax=new THREE.Vector3(0,1,0).applyQuaternion(m.getWorldQuaternion(new THREE.Quaternion())).multiplyScalar(m.scale.y/2);return [c.clone().sub(ax),c.clone().add(ax)];};
+ const m=s.athlete.mesh,skin=[];for(let i=0;i<position.count;i+=2)if(!/^[LR]_(Hand|Index|Middle|Ring|Pinky|Thumb)/.test(main(i)))skin.push(i);
+ const legs=[];for(let i=0;i<position.count;i++)if(/^[LR]_Thigh$/.test(main(i)))legs.push(i);
+ const e0=s1=>elbow(40,0,s1).elbow;
+ for(const u of F){assert.ok(await tilt(40,u)<=12,`pushdown u${u} trunk`);
+  s.update(u);s.scene.updateMatrixWorld(true);
+  const [h0,h1]=ends(s.pushCable.handle),[c0,c1]=ends(s.pushCable.line),pulley=new THREE.Vector3(...PUSH_PULLEY),mid=h0.clone().add(h1).multiplyScalar(.5);
+  for(const n of ['L','R']){const g=s.athlete.map[n+'_Hand'].localToWorld(new THREE.Vector3(...GRIP)),seg=new THREE.Line3(h0,h1);
+   assert.ok(seg.closestPointToPoint(g,true,new THREE.Vector3()).distanceTo(g)<=.02,`pushdown u${u} ${n} grip off the bar`);}
+  // The column's athlete-side face sits .04 behind the pulley centre; the bar never reaches it.
+  for(const h of [h0,h1])assert.ok(h.z+.016<=PUSH_PULLEY[2]+.04-.03,`pushdown u${u} bar ${(PUSH_PULLEY[2]+.04-h.z).toFixed(3)} from the column`);
+  const top=c0.y>c1.y?c0:c1,low=c0.y>c1.y?c1:c0;
+  assert.ok(top.distanceTo(pulley)<=.01,`pushdown u${u} cable ${top.distanceTo(pulley).toFixed(3)} from the pulley`);
+  assert.ok(low.distanceTo(mid)<=.01,`pushdown u${u} cable not on the bar centre`);
+  for(let k=1;k<10;k++){const p=low.clone().lerp(top,k/10);let d=Infinity;for(const i of skin)d=Math.min(d,m.getVertexPosition(i,new THREE.Vector3()).applyMatrix4(m.matrixWorld).distanceTo(p));
+   assert.ok(d>=.02,`pushdown u${u} cable ${d.toFixed(3)} from the skin`);}
+  for(const s1 of [-1,1]){const d=Math.hypot(...elbow(40,u,s1).elbow.map((x,i)=>x-e0(s1)[i]));assert.ok(d<=.06,`pushdown u${u} elbow drifted ${d.toFixed(3)}`);}}
+ for(const s1 of [-1,1]){const e=elbowDeg(40,0,s1);assert.ok(e>=80&&e<=100,`pushdown top elbow ${e.toFixed(0)}°`);assert.ok(elbowDeg(40,.5,s1)>=160,`pushdown bottom elbow ${elbowDeg(40,.5,s1).toFixed(0)}°`);}
+ s.update(0);s.scene.updateMatrixWorld(true);{const [a,b]=ends(s.pushCable.handle),y=(a.y+b.y)/2,chest=s.athlete.map.Chest.getWorldPosition(new THREE.Vector3()).y;assert.ok(Math.abs(y-chest)<=.15,`pushdown start bar ${(y-chest).toFixed(2)} from the chest`);}
+ s.update(.5);s.scene.updateMatrixWorld(true);{const [a,b]=ends(s.pushCable.handle),bar=a.clone().add(b).multiplyScalar(.5);let front=-Infinity;
+  for(const i of legs){const q=m.getVertexPosition(i,new THREE.Vector3()).applyMatrix4(m.matrixWorld);if(Math.abs(q.y-bar.y)<.05&&Math.abs(q.x)<.25)front=Math.max(front,q.z);}
+  assert.ok(bar.z-.02>front&&bar.z-front<=.12,`pushdown finish bar ${(bar.z-front).toFixed(3)} in front of the thighs`);}
+});

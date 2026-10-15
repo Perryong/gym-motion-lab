@@ -95,3 +95,8 @@ test('3D back exercises count toward Back',()=>{
  const w={...at(9,8),entries:[{id:33,sets:[{kg:50,reps:8,done:true},{kg:50,reps:8,done:true}]},{id:32,sets:[{kg:null,reps:6,done:true}]}]};
  assert.deepEqual(muscleSets([w],NOW,7),{chest:0,back:3,shoulders:0,arms:0,legs:0,core:0});
 });
+
+test('3D shoulder and arm exercises count toward Shoulders and Arms',()=>{
+ const w={...at(9,8),entries:[{id:35,sets:[{kg:16,reps:8,done:true},{kg:16,reps:8,done:true}]},{id:40,sets:[{kg:25,reps:12,done:true}]}]};
+ assert.deepEqual(muscleSets([w],NOW,7),{chest:0,back:0,shoulders:2,arms:1,legs:0,core:0});
+});
