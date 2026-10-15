@@ -313,3 +313,49 @@ test('goblet squat cups the top bell of an upright dumbbell against the chest',a
    if(Math.abs(t)<=.22)gap=Math.min(gap,q.clone().sub(c).addScaledVector(axis,-t).length()-.135);}
   assert.ok(gap>=-.012&&gap<=.04,`goblet u${u} dumbbell ${gap.toFixed(3)} from the chest`);}
 });
+
+// Shoulders and arms: shared checks for standing dumbbell and cable exercises.
+const ang=(a,b,c)=>{const u=a.map((x,i)=>x-b[i]),w=c.map((x,i)=>x-b[i]);return Math.acos(Math.min(1,u.reduce((n,x,i)=>n+x*w[i],0)/Math.hypot(...u)/Math.hypot(...w)))*180/Math.PI;};
+const elbowDeg=(id,u,s)=>{const a=elbow(id,u,s);return ang(a.shoulder,a.elbow,a.hand);};
+// Trunk tilt from vertical, hip to the shoulder-line centre.
+async function tilt(id,u){const {trunk}=await import('../dist/motion-body.js'),p=poseAt(id,u),c=trunk(p.hip,p.pitch,p.spine).center,d=c.map((x,i)=>x-p.hip[i]);return Math.acos(d[1]/Math.hypot(...d))*180/Math.PI;}
+function standingChecks(s,id){for(const u of F){s.update(u);const c=shoeContact(s);
+ assert.ok(c.gap>-.012&&c.gap<.015,`${id} u${u} shoes ${c.gap.toFixed(3)} from the floor`);
+ assert.ok(clearance(id,u)>-.012-MAT,`${id} u${u} skin below the floor`);}}
+// Palm normal (hand-bone +Z) in world space.
+const palmDir=(id,u,n)=>{athlete.update(id,u);athlete.group.updateMatrixWorld(true);return new THREE.Vector3(0,0,1).applyQuaternion(athlete.map[n+'_Hand'].getWorldQuaternion(new THREE.Quaternion()));};
+// Distance from a point to a dumbbell, bounded as a flat-ended cylinder (length .44, plate radius .135).
+function toDumbbell(q,w){const c=w.getWorldPosition(new THREE.Vector3()),a=new THREE.Vector3(1,0,0).applyQuaternion(w.getWorldQuaternion(new THREE.Quaternion()));
+ const d=q.clone().sub(c),t=d.dot(a),r=d.addScaledVector(a,-t).length(),ax=Math.abs(t)-.22,rad=r-.135;
+ return ax>0||rad>0?Math.hypot(Math.max(0,ax),Math.max(0,rad)):Math.max(ax,rad);}
+
+test('overhead press presses from the shoulders to straight arms over the head',async()=>{
+ const s=await studio();s.setExercise(35);standingChecks(s,35);
+ for(const u of F){assert.ok(await tilt(35,u)<=8,`press u${u} trunk ${(await tilt(35,u)).toFixed(1)}°`);
+  s.update(u);s.scene.updateMatrixWorld(true);const m=s.athlete.mesh;
+  for(const w of s.weights){assert.ok(w.visible,'two dumbbells');let d=Infinity;for(const i of region.head)d=Math.min(d,toDumbbell(m.getVertexPosition(i,new THREE.Vector3()).applyMatrix4(m.matrixWorld),w));
+   assert.ok(d>=.03,`press u${u} head ${d.toFixed(3)} from a dumbbell`);}}
+ for(const s1 of [-1,1]){const b=elbow(35,0,s1),t=elbow(35,.5,s1);
+  assert.ok(Math.abs(b.hand[1]-b.shoulder[1])<=.1,`bottom hand ${(b.hand[1]-b.shoulder[1]).toFixed(2)} from shoulder height`);
+  assert.ok(ang([b.elbow[0],b.elbow[1]+1,b.elbow[2]],b.elbow,b.hand)<=20,'bottom forearm vertical');
+  assert.ok(b.elbow[1]<b.hand[1],'bottom elbow below the hand');
+  assert.ok(elbowDeg(35,.5,s1)>=160,`top elbow ${elbowDeg(35,.5,s1).toFixed(0)}°`);
+  assert.ok(t.hand[1]-t.shoulder[1]>=.35,'top hands over the head');
+  assert.ok(Math.abs(t.hand[0])>=Math.abs(t.shoulder[0])&&Math.abs(t.hand[0])<=Math.abs(t.shoulder[0])+.15,`top hand x ${t.hand[0].toFixed(2)}`);}
+});
+
+test('lateral raise lifts the arms sideways to shoulder height',async()=>{
+ const s=await studio();s.setExercise(36);standingChecks(s,36);const h0=poseAt(36,0).hip;
+ for(const u of F){assert.ok(await tilt(36,u)<=5,`raise u${u} trunk`);
+  assert.ok(Math.hypot(...poseAt(36,u).hip.map((x,i)=>x-h0[i]))<=.01,`raise u${u} hips moved`);
+  for(const s1 of [-1,1]){const a=elbow(36,u,s1),e=elbowDeg(36,u,s1);
+   assert.ok(e>=150&&e<=175,`raise u${u} elbow ${e.toFixed(0)}°`);
+   assert.ok(a.hand[1]<=a.shoulder[1]+.02,`raise u${u} hand above the shoulder`);
+   assert.ok(Math.abs(a.hand[2]-a.shoulder[2])<=.25,`raise u${u} hand ${(a.hand[2]-a.shoulder[2]).toFixed(2)} out of the side plane`);}}
+ const hip=poseAt(36,0).hip;
+ for(const s1 of [-1,1]){const b=elbow(36,0,s1),t=elbow(36,.5,s1);
+  assert.ok(Math.abs(b.hand[0])>=.15&&b.hand[1]<hip[1],'bottom hands beside the thighs');
+  assert.ok(Math.abs(t.hand[1]-t.shoulder[1])<=.08,`top hand ${(t.hand[1]-t.shoulder[1]).toFixed(2)} from shoulder height`);
+  assert.ok(Math.abs(t.hand[0])>=Math.abs(t.shoulder[0])+.4,'top arms out to the side');}
+ for(const n of ['L','R'])assert.ok(palmDir(36,.5,n).y<-.7,`${n} palm down at the top`);
+});

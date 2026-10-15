@@ -43,6 +43,8 @@ function pose({t=0,hip,pitch=0,spine={},nod,hands,ankles,knee,feet='floor',footP
 const alongside=(s,T)=>({at:[s*.45,MAT+.12,T.shoulder(s)[2]+.8],pole:[s,0,0],palm:[0,-1,0],fingers:'open'});
 const hang=(s,T)=>({at:add(T.shoulder(s),[s*.06,-.82,.04]),pole:[s*.2,0,-1],palm:[-s,0,0],fingers:'relaxed'});
 
+// Standing tall with straight legs, feet under the hips.
+const upright=(extra={})=>({hip:[0,stand(),0],ankles:[-1,1].map(s=>[s*HIP,ANKLE_HEIGHT,0]),focus:[0,1.25,0],...extra});
 export const BODY_IDS={
  // Barbell back squat: hips sit down and back, trunk leans up to ~36°.
  20:u=>{const t=cycleT(u,.56);
@@ -147,6 +149,14 @@ export const BODY_IDS={
   // knee pole up: the default (trunk forward) is nearly parallel to hip→ankle here and flips.
   return pose({t,hip,pitch,knee:[0,1,0],focus:[0,.9,.5],footPitch:[-Math.PI/2,-Math.PI/2],
    ankles:[-1,1].map(s=>[s*HIP,.55,1.18]),
-   hands:(s,T)=>{const sh=T.shoulder(s);return {at:lerp([s*.12,sh[1]-.28,sh[2]+.78],[s*.12,belly[1],belly[2]]),pole:[s*.4,-.2,-1],palm:[-s,0,0],fingers:'grip'};}});}
+   hands:(s,T)=>{const sh=T.shoulder(s);return {at:lerp([s*.12,sh[1]-.28,sh[2]+.78],[s*.12,belly[1],belly[2]]),pole:[s*.4,-.2,-1],palm:[-s,0,0],fingers:'grip'};}});},
+ // Dumbbell overhead press: forearms vertical at the shoulders, pressed to nearly straight arms.
+ 35:u=>{const t=cycleT(u,.5);
+  return pose({t,...upright(),hands:(s,T)=>{const sh=T.shoulder(s),lo=[s*.47,sh[1]+.02,sh[2]+.06],hi=[s*.44,sh[1]+.865,sh[2]];
+   return {at:lo.map((x,i)=>x+(hi[i]-x)*t),pole:[s*.3,-1,0],palm:[0,0,1],dir:[0,1,0],fingers:'grip'};}});},
+ // Dumbbell lateral raise: arms sweep up in the side plane from the thighs to shoulder height.
+ 36:u=>{const t=cycleT(u,.5),a=(-80+80*t)*Math.PI/180;
+  return pose({t,...upright(),hands:(s,T)=>{const sh=T.shoulder(s);
+   return {at:[sh[0]+s*.865*Math.cos(a),sh[1]+.865*Math.sin(a),sh[2]],pole:[0,-.3,-1],palm:[-s*(1-t),-t,0],fingers:'grip'};}});},
 };
 export function bodyPose(id,u){const make=BODY_IDS[id];if(!make)throw new Error('No body pose for '+id);return make(((u%1)+1)%1);}
