@@ -44,3 +44,9 @@ test('all 18 real scenes build and animate with finite geometry and attached equ
   assert.equal(s.bar.visible,[4,17,20,23,33].includes(id));
  }
 });
+
+test('switching away from the pushdown removes its cable',async()=>{
+ const s=scene();s.setExercise(40);assert.ok(s.pushCable,'pushdown cable built');
+ s.setExercise(38);assert.equal(s.pushCable,null);
+ let thin=0;s.equipment.traverse(o=>{if(o.geometry?.parameters?.radiusTop===.008)thin++;});assert.equal(thin,0,'no cable left in the scene');
+});

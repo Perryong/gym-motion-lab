@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import {OrbitControls} from './vendor/OrbitControls.js';
 import {poseAt,GRIP} from './motion.js';
-import {ROW_SEAT,ROW_PLATE_Z,ROW_PADS} from './motion-body.js';
+import {ROW_SEAT,ROW_PLATE_Z,ROW_PADS,PUSH_PULLEY} from './motion-body.js';
 import {Athlete} from './athlete.js';
 import {exercises} from './exercises.js';
 const v=a=>new THREE.Vector3(...a),Y=new THREE.Vector3(0,1,0);
@@ -44,7 +44,7 @@ export class Studio {
  makeBar(){const g=new THREE.Group();this.rod(g,[-1.24,0,0],[1.24,0,0],.025,this.materials.chrome);for(const s of [-1,1]){const p=this.mesh(new THREE.CylinderGeometry(.26,.26,.10,40),this.materials.dark,g);p.rotation.z=Math.PI/2;p.position.x=s*1.02;const ring=this.mesh(new THREE.CylinderGeometry(.12,.12,.108,24),this.materials.metal,g);ring.rotation.z=Math.PI/2;ring.position.x=s*1.02;}return g;}
  clearEquipment(){while(this.equipment.children.length){const c=this.equipment.children[0];c.traverse(o=>{if(o.geometry)o.geometry.dispose();});this.equipment.remove(c);}}
  setExercise(id){this.id=id;this.clearEquipment();const e=this.equipment,m=this.materials;
-  this.machineArms=[];this.cables=[];this.rings=[];this.dipBars=[];this.pullBar=null;this.rowCable=null;
+  this.machineArms=[];this.cables=[];this.rings=[];this.dipBars=[];this.pullBar=null;this.rowCable=null;this.pushCable=null;
   const seated=[3,18].includes(id),bench=[0,2,4,5,7,8,13,17].includes(id),inclined=[0,13,17].includes(id);
   if(id===6){this.box(e,[0,.35,-.67],[1.35,.70,.88],m.pad);this.box(e,[0,.717,-.67],[1.38,.034,.91],m.joint);}
   // Push-ups need the mat from the hands back past the toes, kept inside the floor disc.
@@ -99,6 +99,12 @@ export class Studio {
    const pulley=this.mesh(new THREE.TorusGeometry(.08,.016,10,24),m.metal,e);pulley.position.set(...anchor);pulley.rotation.y=Math.PI/2;
    this.rowCable={anchor,handle:this.rod(e,[-.1,0,0],[.1,0,0],.02,m.dark),line:this.mesh(new THREE.CylinderGeometry(.008,.008,1,8),m.chrome,e)};
   }
+  if(id===40){
+   // Triceps pushdown: a cable column in front with the pulley at the top.
+   this.box(e,[0,1.12,PUSH_PULLEY[2]+.1],[.32,2.24,.12],m.dark);
+   const pulley=this.mesh(new THREE.TorusGeometry(.07,.016,10,24),m.metal,e);pulley.position.set(...PUSH_PULLEY);pulley.rotation.y=Math.PI/2;
+   this.pushCable={anchor:PUSH_PULLEY,handle:this.rod(e,[-.1,0,0],[.1,0,0],.016,m.chrome),line:this.mesh(new THREE.CylinderGeometry(.008,.008,1,8),m.chrome,e)};
+  }
   if(id===31||id===32){for(const side of [-1,1]){this.rod(e,[side*1.0,.05,-.2],[side*1.0,3.6,-.2],.05,m.metal);this.rod(e,[side*1.0,.05,-.6],[side*1.0,.05,.3],.06,m.metal);}this.pullBar=this.rod(e,[-1,0,0],[1,0,0],.025,m.chrome);}
   this.weights.forEach(w=>w.visible=[0,1,2,5,7,8,13,21,35,36,37,38,39].includes(id));if(id===5||id===21)this.weights[1].visible=false;
   this.bar.visible=[4,17,20,23,33].includes(id);this.plate.visible=[10,29].includes(id);this.ball.visible=id===12;
@@ -132,6 +138,7 @@ export class Studio {
   }
   if([10,29].includes(this.id)&&this.plate){this.plate.position.copy(both);if(this.id===29){const chest=this.athlete.map.ShoulderLine.getWorldQuaternion(new THREE.Quaternion());this.plate.quaternion.copy(rootQ).multiply(chest).multiply(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(1,0,0),new THREE.Vector3(0,0,1)));}}
   if(this.pullBar)this.link(this.pullBar,[-1,both.y,both.z],[1,both.y,both.z]);
+  if(this.pushCable){const l=palm(-1),r=palm(1);this.link(this.pushCable.handle,l.toArray(),r.toArray());this.link(this.pushCable.line,both.toArray(),this.pushCable.anchor);}
   if(this.rowCable){const l=palm(-1),r=palm(1);this.link(this.rowCable.handle,l.toArray(),r.toArray());this.link(this.rowCable.line,both.toArray(),this.rowCable.anchor);}
   for(const {side,posts,bar} of this.dipBars??[]){const g=palm(side);this.link(bar,[g.x,g.y,-.50],[g.x,g.y,.78]);for(const {z,rod} of posts)this.link(rod,[g.x,.08,z],[g.x,g.y,z]);}
   if(this.id===12&&this.ball){

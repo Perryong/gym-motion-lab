@@ -14,6 +14,8 @@ export const stand=()=>ANKLE_HEIGHT+LEG*.995,MAT=.045,BACK=.185;
 // trunk tilts head-down slightly and the head, shoulder blades and seat all touch the mat.
 // Seated cable row: bench top height, shared with scene.js.
 export const ROW_SEAT=.45;
+// Cable triceps pushdown: the high pulley in front of the athlete, shared with scene.js.
+export const PUSH_PULLEY=[0,2.1,.85];
 // Footplate face (where the soles press) and its two pads, one per foot, leaving a gap
 // at x=0 for the cable. Measured from the shoe with the soles turned to face the plate.
 export const ROW_PLATE_Z=1.38,ROW_PADS=[-1,1].map(s=>({x:s*.155,w:.25,y0:.4,y1:.97}));
@@ -171,6 +173,10 @@ export const BODY_IDS={
  // Curls: the elbow stays fixed just in front of the hip line and the forearm hinges about it.
  38:u=>curl(u,(s,f)=>[0,Math.sin(f),Math.cos(f)],.1,24),
  // Hammer curl: the same hinge with the palms facing each other.
- 39:u=>curl(u,s=>[-s,0,0],.18,20,11)
+ 39:u=>curl(u,s=>[-s,0,0],.18,20,11),
+ // Cable triceps pushdown: slight forward lean, elbows pinned at the sides, forearms hinge from level to straight.
+ 40:u=>{const t=cycleT(u,.5),f=(100-80*t)*Math.PI/180;
+  return pose({t,...upright(),pitch:.12,hands:(s,T)=>{const sh=T.shoulder(s),d=[s*.08,-1,.1],n=.44/Math.hypot(...d),el=sh.map((x,i)=>x+d[i]*n),at=[el[0],el[1]-.44*Math.cos(f),el[2]+.44*Math.sin(f)];
+   return {at,pole:el.map((x,i)=>x-(sh[i]+at[i])/2),palm:[0,-Math.sin(f),-Math.cos(f)],fingers:'grip'};}});}
 };
 export function bodyPose(id,u){const make=BODY_IDS[id];if(!make)throw new Error('No body pose for '+id);return make(((u%1)+1)%1);}

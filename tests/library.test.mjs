@@ -30,7 +30,7 @@ test('the build refuses entries that break the library rules',()=>{
  assert.throws(build(['0003']),/group/);
  assert.throws(build(['0004']),/steps/);
  assert.throws(build(['0001'],{'0001':4}),/duplicate/);
- assert.throws(build(['0001'],{'0005':40}),/3D/);
+ assert.throws(build(['0001'],{'0005':99}),/3D/);
  assert.deepEqual(buildLibrary(data,{include:['0001'],duplicates:{}}),[{id:'L0001',name:'Dumbbell curl',short:'Curl',group:'arms',equipment:'dumbbell',target:'biceps',secondary:['forearms'],steps:['Stand tall.','Curl the weights.']}]);
 });
 
