@@ -122,7 +122,7 @@ test('new equipment sits in the hands',async()=>{
   s.setExercise(id);s.update(phase);s.scene.updateMatrixWorld(true);
   const mid=palm(-1).add(palm(1)).multiplyScalar(.5);
   if([20,23].includes(id))assert.ok(s.bar.getWorldPosition(new THREE.Vector3()).distanceTo(new THREE.Vector3(0,mid.y,mid.z))<1e-6,`bar ${id}`);
-  if(id===21)assert.ok(s.weights[0].getWorldPosition(new THREE.Vector3()).distanceTo(mid)<1e-6&&!s.weights[1].visible,'goblet dumbbell');
+  if(id===21)assert.ok(s.weights[0].getWorldPosition(new THREE.Vector3()).distanceTo(mid.clone().setY(mid.y-.06))<1e-6&&!s.weights[1].visible,'goblet dumbbell hangs with its top bell in the palms');
   if(id===29)assert.ok(s.plate.visible&&s.plate.getWorldPosition(new THREE.Vector3()).distanceTo(mid)<1e-6,'twist plate');
   if(id===31){const bar=s.pullBar.getWorldPosition(new THREE.Vector3());assert.ok(Math.abs(bar.y-mid.y)<1e-6&&Math.abs(bar.z-mid.z)<1e-6,'pull-up bar through palms');}
  }
