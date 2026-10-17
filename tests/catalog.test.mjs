@@ -58,3 +58,8 @@ test('replaced library ids resolve to their 3D exercises',()=>{
  assert.deepEqual(routeFor('#exercise/L0861'),['exercise',34]);assert.deepEqual(routeFor('#exercise/L0027'),['exercise',33]);
  assert.equal(parseExerciseId('L0027'),33);
 });
+
+test('library exercises show muscle and equipment names in sentence case',()=>{
+ for(const id of catalogIds.filter(id=>typeof id==='string')){const e=exerciseById(id);
+  for(const text of [e.target,e.equipment,...e.secondary])assert.equal(text[0],text[0].toUpperCase(),`${id} "${text}"`);}
+});

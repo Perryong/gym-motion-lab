@@ -1,4 +1,4 @@
-// One lookup for every exercise the screens show: the 30 with 3D motion
+// One lookup for every exercise the screens show: those with 3D motion
 // (exercises.js, numeric ids) and the text-only library (library.js, 'L…' ids).
 // 3D modules keep using exercises.js directly, including its internal 'abs' key.
 import {exercises,allIds} from './exercises.js';
@@ -10,7 +10,9 @@ const GROUP_3D={chest:'chest',legs:'legs',abs:'core',back:'back',shoulders:'shou
 const byId=new Map();
 for(const id of allIds){const e=exercises[id];
  byId.set(id,{id,name:e.name,short:e.short,group:GROUP_3D[e.group],equipment:e.equipment,target:e.focus,secondary:e.secondary.split(' · '),steps:e.steps,has3d:true});}
-for(const e of LIBRARY)byId.set(e.id,{...e,has3d:false});
+// The dataset writes muscles and equipment in lower case; show them in sentence case.
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+for(const e of LIBRARY)byId.set(e.id,{...e,target:cap(e.target),equipment:cap(e.equipment),secondary:e.secondary.map(cap),has3d:false});
 
 export const catalogIds=[...byId.keys()];
 export const exerciseById=id=>byId.get(id)??null;
