@@ -8,6 +8,7 @@ const {GLTFLoader}=await import('../dist/vendor/loaders/GLTFLoader.js');
 const {Athlete}=await import('../dist/athlete.js');
 const {poseAt,solveArm,HIP}=await import('../dist/motion.js');
 const {MAT}=await import('../dist/motion-body.js');
+const exercisesModule=await import('../dist/exercises.js');
 
 const b=await readFile(new URL('../dist/assets/athlete.glb',import.meta.url));
 const athlete=new Athlete(await new GLTFLoader().parseAsync(b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength),''));
@@ -456,4 +457,16 @@ test('seated row hands wrap the straight handle along its length',async()=>{
    assert.ok(deg<=20,`row u${u} ${n} fist ${deg.toFixed(0)}° across the handle`);
    const hb=s.athlete.map[n+'_Hand'],fore=hb.getWorldPosition(new THREE.Vector3()).sub(s.athlete.map[n+'_Forearm'].getWorldPosition(new THREE.Vector3())).normalize(),bend=fore.angleTo(new THREE.Vector3(0,1,0).applyQuaternion(hb.getWorldQuaternion(new THREE.Quaternion())))*180/Math.PI;
    assert.ok(bend<=30,`row u${u} ${n} wrist bent ${bend.toFixed(0)}°`);}}
+});
+
+test('no elbow flips to bend the other way during a rep',()=>{
+ const {allIds}=exercisesModule;
+ for(const id of allIds)for(const s1 of [-1,1]){let prev=null,prevU=0;
+  for(let k=0;k<=200;k++){const u=k/200,a=elbow(id,u,s1),up=a.elbow.map((x,i)=>x-a.shoulder[i]),fo=a.hand.map((x,i)=>x-a.elbow[i]);
+   const n=[up[1]*fo[2]-up[2]*fo[1],up[2]*fo[0]-up[0]*fo[2],up[0]*fo[1]-up[1]*fo[0]],len=Math.hypot(...n);
+   // A nearly straight arm has no defined bend direction; skip it.
+   if(len<.02){prev=null;continue;}
+   const h=n.map(x=>x/len);
+   if(prev)assert.ok(h.reduce((t,x,i)=>t+x*prev[i],0)>.5,`${id} ${s1<0?'L':'R'} elbow flips between u${prevU} and u${u}`);
+   prev=h;prevU=u;}}
 });
