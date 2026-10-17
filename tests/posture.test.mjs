@@ -8,6 +8,7 @@ const {GLTFLoader}=await import('../dist/vendor/loaders/GLTFLoader.js');
 const {Athlete}=await import('../dist/athlete.js');
 const {poseAt,solveArm,HIP}=await import('../dist/motion.js');
 const {MAT}=await import('../dist/motion-body.js');
+const exercisesModule=await import('../dist/exercises.js');
 
 const b=await readFile(new URL('../dist/assets/athlete.glb',import.meta.url));
 const athlete=new Athlete(await new GLTFLoader().parseAsync(b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength),''));
@@ -422,13 +423,16 @@ test('triceps pushdown keeps the elbows pinned and runs the cable from a high pu
  for(const u of F){assert.ok(await tilt(40,u)<=12,`pushdown u${u} trunk`);
   s.update(u);s.scene.updateMatrixWorld(true);
   const [h0,h1]=ends(s.pushCable.handle),[c0,c1]=ends(s.pushCable.line),pulley=new THREE.Vector3(...PUSH_PULLEY),mid=h0.clone().add(h1).multiplyScalar(.5);
-  for(const n of ['L','R']){const g=s.athlete.map[n+'_Hand'].localToWorld(new THREE.Vector3(...GRIP)),seg=new THREE.Line3(h0,h1);
-   assert.ok(seg.closestPointToPoint(g,true,new THREE.Vector3()).distanceTo(g)<=.02,`pushdown u${u} ${n} grip off the bar`);}
-  // The column's athlete-side face sits .04 behind the pulley centre; the bar never reaches it.
-  for(const h of [h0,h1])assert.ok(h.z+.016<=PUSH_PULLEY[2]+.04-.03,`pushdown u${u} bar ${(PUSH_PULLEY[2]+.04-h.z).toFixed(3)} from the column`);
+  // The bar is drawn between the grips, so check what that cannot guarantee: level, at a real grip width.
+  assert.ok(Math.abs(h0.y-h1.y)<=.02,`pushdown u${u} bar tilted ${(h0.y-h1.y).toFixed(3)}`);
+  const sw=Math.abs(elbow(40,u,1).shoulder[0]-elbow(40,u,-1).shoulder[0]);
+  assert.ok(h0.distanceTo(h1)>=.3&&h0.distanceTo(h1)<=sw+.1,`pushdown u${u} grip width ${h0.distanceTo(h1).toFixed(2)} vs shoulders ${sw.toFixed(2)}`);
+  // Below head height, nothing stands in front of the torso (the front view must show the body).
+  s.equipment.traverse(o=>{if(!o.isMesh||o===s.pushCable.handle||o===s.pushCable.line)return;const bb=new THREE.Box3().setFromObject(o);
+   if(bb.min.y<2&&bb.max.z>.25)assert.ok(bb.min.x>=.45||bb.max.x<=-.45,`pushdown frame part at x ${bb.min.x.toFixed(2)}..${bb.max.x.toFixed(2)} blocks the torso`);});
   const top=c0.y>c1.y?c0:c1,low=c0.y>c1.y?c1:c0;
-  assert.ok(top.distanceTo(pulley)<=.01,`pushdown u${u} cable ${top.distanceTo(pulley).toFixed(3)} from the pulley`);
-  assert.ok(low.distanceTo(mid)<=.01,`pushdown u${u} cable not on the bar centre`);
+  // The cable leaves the wheel (radius .07) at its rim, not from inside it.
+  assert.ok(Math.abs(top.distanceTo(pulley)-.07)<=.01,`pushdown u${u} cable ${top.distanceTo(pulley).toFixed(3)} from the wheel centre`);
   for(let k=1;k<10;k++){const p=low.clone().lerp(top,k/10);let d=Infinity;for(const i of skin)d=Math.min(d,m.getVertexPosition(i,new THREE.Vector3()).applyMatrix4(m.matrixWorld).distanceTo(p));
    assert.ok(d>=.02,`pushdown u${u} cable ${d.toFixed(3)} from the skin`);}
   for(const s1 of [-1,1]){const d=Math.hypot(...elbow(40,u,s1).elbow.map((x,i)=>x-e0(s1)[i]));assert.ok(d<=.06,`pushdown u${u} elbow drifted ${d.toFixed(3)}`);}}
@@ -437,4 +441,32 @@ test('triceps pushdown keeps the elbows pinned and runs the cable from a high pu
  s.update(.5);s.scene.updateMatrixWorld(true);{const [a,b]=ends(s.pushCable.handle),bar=a.clone().add(b).multiplyScalar(.5);let front=-Infinity;
   for(const i of legs){const q=m.getVertexPosition(i,new THREE.Vector3()).applyMatrix4(m.matrixWorld);if(Math.abs(q.y-bar.y)<.05&&Math.abs(q.x)<.25)front=Math.max(front,q.z);}
   assert.ok(bar.z-.02>front&&bar.z-front<=.12,`pushdown finish bar ${(bar.z-front).toFixed(3)} in front of the thighs`);}
+});
+
+test('a model rebuild bakes clips only for the exercises the model ships with',async()=>{
+ const {createExerciseClips}=await import('../dist/rig.js'),{bakedIds}=await import('../dist/exercises.js');
+ const names=createExerciseClips(athlete.group,athlete.map).map(c=>c.name);
+ assert.deepEqual(names,bakedIds.map(id=>'Exercise_'+id));
+});
+
+test('seated row hands wrap the straight handle along its length',async()=>{
+ const s=await studio();s.setExercise(34);
+ for(const u of F){s.update(u);s.scene.updateMatrixWorld(true);
+  const h=s.rowCable.handle,axis=new THREE.Vector3(0,1,0).applyQuaternion(h.getWorldQuaternion(new THREE.Quaternion()));
+  for(const n of ['L','R']){const grip=new THREE.Vector3(1,0,0).applyQuaternion(s.athlete.map[n+'_Hand'].getWorldQuaternion(new THREE.Quaternion())),deg=Math.acos(Math.abs(grip.dot(axis)))*180/Math.PI;
+   assert.ok(deg<=20,`row u${u} ${n} fist ${deg.toFixed(0)}° across the handle`);
+   const hb=s.athlete.map[n+'_Hand'],fore=hb.getWorldPosition(new THREE.Vector3()).sub(s.athlete.map[n+'_Forearm'].getWorldPosition(new THREE.Vector3())).normalize(),bend=fore.angleTo(new THREE.Vector3(0,1,0).applyQuaternion(hb.getWorldQuaternion(new THREE.Quaternion())))*180/Math.PI;
+   assert.ok(bend<=30,`row u${u} ${n} wrist bent ${bend.toFixed(0)}°`);}}
+});
+
+test('no elbow flips to bend the other way during a rep',()=>{
+ const {allIds}=exercisesModule;
+ for(const id of allIds)for(const s1 of [-1,1]){let prev=null,prevU=0;
+  for(let k=0;k<=200;k++){const u=k/200,a=elbow(id,u,s1),up=a.elbow.map((x,i)=>x-a.shoulder[i]),fo=a.hand.map((x,i)=>x-a.elbow[i]);
+   const n=[up[1]*fo[2]-up[2]*fo[1],up[2]*fo[0]-up[0]*fo[2],up[0]*fo[1]-up[1]*fo[0]],len=Math.hypot(...n);
+   // A nearly straight arm has no defined bend direction; skip it.
+   if(len<.02){prev=null;continue;}
+   const h=n.map(x=>x/len);
+   if(prev)assert.ok(h.reduce((t,x,i)=>t+x*prev[i],0)>.5,`${id} ${s1<0?'L':'R'} elbow flips between u${prevU} and u${u}`);
+   prev=h;prevU=u;}}
 });

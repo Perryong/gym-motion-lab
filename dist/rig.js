@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {allIds} from './exercises.js';
+import {bakedIds} from './exercises.js';
 import {poseAt,solveArm,THIGH,SHIN,HIP} from './motion.js';
 // Hand-local joint positions (fingers along +Y, palm toward +Z) and hand bind
 // rotations measured from the athlete model by scripts/export-charter-blender.py.
@@ -98,7 +98,7 @@ export function applyRigPose(group,map,id,phase){
  group.updateMatrixWorld(true);return p;
 }
 export function createExerciseClips(group,map){
- return allIds.map(id=>{
+ return bakedIds.map(id=>{
   const duration=durationFor(id),times=[],tracks=[],samples=new Map(Object.values(map).map(b=>[b.name,{position:[],quaternion:[]}]));
   for(let f=0;f<=80;f++){
    const phase=f/80;times.push(phase*duration);applyRigPose(group,map,id,phase);

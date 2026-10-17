@@ -164,3 +164,11 @@ test('the muscle legend names the current group overlay',async()=>{
  assert.match(html,/<span class="muscle-legend"><i><\/i> <span id="legend-text">Chest overlay<\/span><\/span>/);
  assert.match(app,/\$\('legend-text'\)\.textContent=meta\.overlay/);
 });
+
+test('phase labels switch where a single up-and-down rep turns',()=>{
+ for(const id of allIds){const e=exercises[id];if(e.labels?.length!==2)continue;
+  const t=Array.from({length:401},(_,k)=>poseAt(id,k/400).t??0),peak=t.indexOf(Math.max(...t));
+  // Only reps that rise from rest to one peak and fall back (not alternating sides or breaths).
+  const single=t[0]<.02&&t[400]<.02&&t.slice(0,peak).every((x,k)=>x<=t[k+1]+1e-9)&&t.slice(peak).every((x,k,a)=>k===a.length-1||x>=a[k+1]-1e-9);
+  if(single)assert.ok(Math.abs(e.labels[1][0]-peak/400)<=.02,`${id} label switches at ${e.labels[1][0]}, motion turns at ${peak/400}`);}
+});

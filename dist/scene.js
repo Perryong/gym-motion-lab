@@ -100,10 +100,13 @@ export class Studio {
    this.rowCable={anchor,handle:this.rod(e,[-.1,0,0],[.1,0,0],.02,m.dark),line:this.mesh(new THREE.CylinderGeometry(.008,.008,1,8),m.chrome,e)};
   }
   if(id===40){
-   // Triceps pushdown: a cable column in front with the pulley at the top.
-   this.box(e,[0,1.12,PUSH_PULLEY[2]+.1],[.32,2.24,.12],m.dark);
+   // Triceps pushdown: an upright on the athlete's right (away from the default camera) and an arm
+   // over the head carry the pulley, so nothing stands in front of the torso.
+   const [,py,pz]=PUSH_PULLEY,top=py+.16;
+   this.box(e,[-.7,top/2,pz],[.12,top,.12],m.dark);this.box(e,[-.35,top,pz],[.82,.08,.08],m.dark);
+   this.rod(e,[0,top,pz],[0,py+.07,pz],.012,m.metal);
    const pulley=this.mesh(new THREE.TorusGeometry(.07,.016,10,24),m.metal,e);pulley.position.set(...PUSH_PULLEY);pulley.rotation.y=Math.PI/2;
-   this.pushCable={anchor:PUSH_PULLEY,handle:this.rod(e,[-.1,0,0],[.1,0,0],.016,m.chrome),line:this.mesh(new THREE.CylinderGeometry(.008,.008,1,8),m.chrome,e)};
+   this.pushCable={handle:this.rod(e,[-.1,0,0],[.1,0,0],.016,m.chrome),line:this.mesh(new THREE.CylinderGeometry(.008,.008,1,8),m.chrome,e)};
   }
   if(id===31||id===32){for(const side of [-1,1]){this.rod(e,[side*1.0,.05,-.2],[side*1.0,3.6,-.2],.05,m.metal);this.rod(e,[side*1.0,.05,-.6],[side*1.0,.05,.3],.06,m.metal);}this.pullBar=this.rod(e,[-1,0,0],[1,0,0],.025,m.chrome);}
   this.weights.forEach(w=>w.visible=[0,1,2,5,7,8,13,21,35,36,37,38,39].includes(id));if(id===5||id===21)this.weights[1].visible=false;
@@ -138,7 +141,8 @@ export class Studio {
   }
   if([10,29].includes(this.id)&&this.plate){this.plate.position.copy(both);if(this.id===29){const chest=this.athlete.map.ShoulderLine.getWorldQuaternion(new THREE.Quaternion());this.plate.quaternion.copy(rootQ).multiply(chest).multiply(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(1,0,0),new THREE.Vector3(0,0,1)));}}
   if(this.pullBar)this.link(this.pullBar,[-1,both.y,both.z],[1,both.y,both.z]);
-  if(this.pushCable){const l=palm(-1),r=palm(1);this.link(this.pushCable.handle,l.toArray(),r.toArray());this.link(this.pushCable.line,both.toArray(),this.pushCable.anchor);}
+  // The cable leaves the pulley wheel at its rim, on the side facing the bar.
+  if(this.pushCable){const l=palm(-1),r=palm(1),c=v(PUSH_PULLEY),rim=c.clone().addScaledVector(both.clone().sub(c).normalize(),.07);this.link(this.pushCable.handle,l.toArray(),r.toArray());this.link(this.pushCable.line,both.toArray(),rim.toArray());}
   if(this.rowCable){const l=palm(-1),r=palm(1);this.link(this.rowCable.handle,l.toArray(),r.toArray());this.link(this.rowCable.line,both.toArray(),this.rowCable.anchor);}
   for(const {side,posts,bar} of this.dipBars??[]){const g=palm(side);this.link(bar,[g.x,g.y,-.50],[g.x,g.y,.78]);for(const {z,rod} of posts)this.link(rod,[g.x,.08,z],[g.x,g.y,z]);}
   if(this.id===12&&this.ball){
