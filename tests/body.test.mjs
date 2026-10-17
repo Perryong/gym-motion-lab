@@ -2,7 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {registerHooks} from 'node:module';
 registerHooks({resolve(s,c,n){return s==='three'?{url:new URL('../dist/vendor/three.module.js',import.meta.url).href,shortCircuit:true}:n(s,c);}});
-const {exercises,displayOrder,groups,allIds,GROUP_META,groupFromHash,NO_OVERLAY}=await import('../dist/exercises.js');
+const {exercises,displayOrder,groups,allIds,GROUP_META,groupFromHash}=await import('../dist/exercises.js');
 const BODY=[20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40],ANKLE_H=.2;
 
 test('legs and abs groups hold six exercises each with complete copy',()=>{
@@ -22,11 +22,9 @@ test('legs and abs groups hold six exercises each with complete copy',()=>{
  for(const g of ['chest','legs','abs','back','shoulders','arms'])assert.ok(GROUP_META[g].title&&GROUP_META[g].link[0].startsWith('https://'));
 });
 
-test('groups without a muscle overlay say so and disable the toggle',()=>{
- assert.deepEqual(NO_OVERLAY,['back','shoulders','arms']);
- assert.equal(GROUP_META.shoulders.overlay,'Shoulders overlay not available');
- assert.equal(GROUP_META.arms.overlay,'Arms overlay not available');
- for(const g of NO_OVERLAY)assert.equal(GROUP_META[g].overlay,`${GROUP_META[g].title} overlay not available`);
+test('every 3D group has a muscle overlay',()=>{
+ for(const g of Object.keys(groups))assert.ok(GROUP_META[g].overlay&&!/not available/.test(GROUP_META[g].overlay),`${g}: ${GROUP_META[g].overlay}`);
+ assert.equal(GROUP_META.back.overlay,'Back overlay');assert.equal(GROUP_META.shoulders.overlay,'Shoulders overlay');assert.equal(GROUP_META.arms.overlay,'Arms overlay');
 });
 
 test('group hash parsing is case-insensitive and falls back to chest',()=>{

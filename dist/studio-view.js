@@ -1,4 +1,4 @@
-import {exercises,groups,allIds,GROUP_META,NO_OVERLAY} from './exercises.js';
+import {exercises,groups,allIds,GROUP_META} from './exercises.js';
 import {durationFor} from './rig.js';
 const $=id=>document.getElementById(id);
 let studio=null,id=4,phase=0,playing=!matchMedia('(prefers-reduced-motion: reduce)').matches,speed=1,last=0,raf=null,inView=true,settleUntil=0;
@@ -8,9 +8,7 @@ export function selectExercise(next){
  if(!Number.isInteger(next)||!allIds.includes(next))throw new Error('Choose an available exercise.');
  id=next;phase=0;group=exercises[id].group;const e=exercises[id],meta=GROUP_META[group];
  $('counter-total').textContent=String(groups[group].length);$('group-label').textContent=meta.label;$('legend-text').textContent=meta.overlay;
- // Groups the model cannot highlight keep the Muscles toggle off and disabled.
- const noOverlay=NO_OVERLAY.includes(group),btn=$('muscles');btn.disabled=noOverlay;
- if(noOverlay&&btn.getAttribute('aria-pressed')==='true'){btn.setAttribute('aria-pressed','false');studio?.setMuscles(false);}
+ const btn=$('muscles');
  document.querySelector('.muscle-legend').style.opacity=btn.getAttribute('aria-pressed')==='true'?'1':'.35';$('technique-link').href=meta.link[0];$('technique-link').textContent=meta.link[1];
  $('counter').textContent=String(groups[group].indexOf(id)+1).padStart(2,'0');$('exercise-title').textContent=e.name;$('type-tag').textContent=e.type;$('focus-tag').textContent=e.focus;$('description').textContent=e.desc;
  $('steps').replaceChildren(...e.steps.map(text=>{const li=document.createElement('li');li.textContent=text;return li;}));$('cue-text').textContent=e.cue;$('avoid-text').textContent=e.avoid;

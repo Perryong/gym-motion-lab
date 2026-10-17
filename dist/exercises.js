@@ -60,10 +60,8 @@ export const GROUP_META={
  chest:{label:'Chest',title:'Chest',region:'UPPER BODY',overlay:'Chest overlay',note:'18 chest exercises, each with its own demonstration and form cues.',link:['https://www.acefitness.org/resources/everyone/exercise-library/19/chest-press/','Chest press technique · ACE ↗']},
  legs:{label:'Legs',title:'Legs',region:'LOWER BODY',overlay:'Legs overlay',note:'6 leg exercises for quads, glutes, hamstrings and calves.',link:['https://www.acefitness.org/resources/everyone/exercise-library/135/bodyweight-squat/','Squat technique · ACE ↗']},
  abs:{label:'Abs',title:'Core',region:'CORE',overlay:'Core overlay',note:'6 core exercises for spinal flexion, bracing and rotation.',link:['https://www.acefitness.org/resources/everyone/exercise-library/32/front-plank/','Plank technique · ACE ↗']},
- back:{label:'Back',title:'Back',region:'UPPER BODY',overlay:'Back overlay not available',note:'Back exercises with 3D motion: vertical pulls and rows.',link:['https://www.acefitness.org/resources/everyone/exercise-library/','Exercise library · ACE ↗']},
- shoulders:{label:'Shoulders',title:'Shoulders',region:'UPPER BODY',overlay:'Shoulders overlay not available',note:'Shoulder exercises with 3D motion: pressing and raises.',link:['https://www.acefitness.org/resources/everyone/exercise-library/','Exercise library · ACE ↗']},
- arms:{label:'Arms',title:'Arms',region:'UPPER BODY',overlay:'Arms overlay not available',note:'Arm exercises with 3D motion: curls and pushdowns.',link:['https://www.acefitness.org/resources/everyone/exercise-library/','Exercise library · ACE ↗']},
+ back:{label:'Back',title:'Back',region:'UPPER BODY',overlay:'Back overlay',note:'Back exercises with 3D motion: vertical pulls and rows.',link:['https://www.acefitness.org/resources/everyone/exercise-library/','Exercise library · ACE ↗']},
+ shoulders:{label:'Shoulders',title:'Shoulders',region:'UPPER BODY',overlay:'Shoulders overlay',note:'Shoulder exercises with 3D motion: pressing and raises.',link:['https://www.acefitness.org/resources/everyone/exercise-library/','Exercise library · ACE ↗']},
+ arms:{label:'Arms',title:'Arms',region:'UPPER BODY',overlay:'Arms overlay',note:'Arm exercises with 3D motion: curls and pushdowns.',link:['https://www.acefitness.org/resources/everyone/exercise-library/','Exercise library · ACE ↗']},
 };
-// The model has highlight materials only for chest, legs and core.
-export const NO_OVERLAY=['back','shoulders','arms'];
 export const groupFromHash=hash=>{const g=String(hash??'').replace(/^#/,'').toLowerCase();return Object.hasOwn(groups,g)?g:'chest';};

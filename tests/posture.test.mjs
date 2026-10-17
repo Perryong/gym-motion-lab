@@ -470,3 +470,20 @@ test('no elbow flips to bend the other way during a rep',()=>{
    if(prev)assert.ok(h.reduce((t,x,i)=>t+x*prev[i],0)>.5,`${id} ${s1<0?'L':'R'} elbow flips between u${prevU} and u${u}`);
    prev=h;prevU=u;}}
 });
+
+test('back, shoulder and arm highlights cover the right body parts without overlapping',()=>{
+ const P=athlete.mesh.geometry.attributes.position,c=(g,t)=>[0,1,2].map(d=>[0,1,2].reduce((n,k)=>n+P.getComponent(g.index.getX(t+k),d),0)/3);
+ const byGroup={};for(const m of athlete.meshes){const g=Object.entries({FocusBack:'back',FocusShoulders:'shoulders',FocusArms:'arms'}).find(([n])=>n===m.material.name)?.[1];if(g)(byGroup[g]??=[]).push(m);}
+ for(const [g,check,min] of [['back',([x,y,z])=>z<0&&y>.2&&y<1&&Math.abs(x)<.3,150],['shoulders',([x,y])=>Math.abs(x)>=.2&&Math.abs(x)<=.6&&y>.6,200],['arms',([x])=>Math.abs(x)>=.5&&Math.abs(x)<=1.25,400]]){
+  const list=byGroup[g]??[];let n=0;for(const m of list)for(let t=0;t<m.geometry.index.count;t+=3){n++;const p=c(m.geometry,t);assert.ok(check(p),`${g} triangle at ${p.map(v=>v.toFixed(2))}`);}
+  assert.ok(n>=min,`${g} region has ${n} triangles`);
+  assert.ok(athlete.focus[g]?.length,`${g} has a highlight material`);}
+ // Every triangle of the model belongs to exactly one mesh.
+ const seen=new Set();let total=0;for(const m of athlete.meshes){const ix=m.geometry.index;for(let t=0;t<ix.count;t+=3){const key=[ix.getX(t),ix.getX(t+1),ix.getX(t+2)].sort((a,b)=>a-b).join();total++;assert.ok(!seen.has(key)||key==='',`triangle ${key} drawn twice`);seen.add(key);}}
+});
+
+test('turning muscles on lights only the exercise group',()=>{
+ for(const g of ['chest','legs','abs','back','shoulders','arms']){athlete.setMuscles(true,g);
+  for(const [k,list] of Object.entries(athlete.focus))for(const m of list)assert.equal(m.emissive.getHex()!==0,k===g,`${g}: ${k} ${m.name}`);}
+ athlete.setMuscles(false);for(const list of Object.values(athlete.focus))for(const m of list)assert.equal(m.emissive.getHex(),0);
+});
