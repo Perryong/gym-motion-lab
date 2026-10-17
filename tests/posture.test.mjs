@@ -444,3 +444,13 @@ test('a model rebuild bakes clips only for the exercises the model ships with',a
  const names=createExerciseClips(athlete.group,athlete.map).map(c=>c.name);
  assert.deepEqual(names,bakedIds.map(id=>'Exercise_'+id));
 });
+
+test('seated row hands wrap the straight handle along its length',async()=>{
+ const s=await studio();s.setExercise(34);
+ for(const u of F){s.update(u);s.scene.updateMatrixWorld(true);
+  const h=s.rowCable.handle,axis=new THREE.Vector3(0,1,0).applyQuaternion(h.getWorldQuaternion(new THREE.Quaternion()));
+  for(const n of ['L','R']){const grip=new THREE.Vector3(1,0,0).applyQuaternion(s.athlete.map[n+'_Hand'].getWorldQuaternion(new THREE.Quaternion())),deg=Math.acos(Math.abs(grip.dot(axis)))*180/Math.PI;
+   assert.ok(deg<=20,`row u${u} ${n} fist ${deg.toFixed(0)}° across the handle`);
+   const hb=s.athlete.map[n+'_Hand'],fore=hb.getWorldPosition(new THREE.Vector3()).sub(s.athlete.map[n+'_Forearm'].getWorldPosition(new THREE.Vector3())).normalize(),bend=fore.angleTo(new THREE.Vector3(0,1,0).applyQuaternion(hb.getWorldQuaternion(new THREE.Quaternion())))*180/Math.PI;
+   assert.ok(bend<=30,`row u${u} ${n} wrist bent ${bend.toFixed(0)}°`);}}
+});

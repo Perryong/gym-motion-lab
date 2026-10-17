@@ -155,7 +155,7 @@ export const BODY_IDS={
   // knee pole up: the default (trunk forward) is nearly parallel to hip→ankle here and flips.
   return pose({t,hip,pitch,knee:[0,1,0],focus:[0,.9,.5],footPitch:[-Math.PI/2,-Math.PI/2],
    ankles:[-1,1].map(s=>[s*HIP,.55,1.18]),
-   hands:(s,T)=>{const sh=T.shoulder(s);return {at:lerp([s*.12,sh[1]-.28,sh[2]+.78],[s*.12,belly[1],belly[2]]),pole:[s*.4,-.2,-1],palm:[-s,0,0],fingers:'grip'};}});},
+   hands:(s,T)=>{const sh=T.shoulder(s);return {at:lerp([s*.12,sh[1]-.28,sh[2]+.78],[s*.12,belly[1],belly[2]]),pole:[s*.4,-.2,-1],palm:[0,-1,0],dir:[0,0,1],fingers:'grip'};}});},
  // Dumbbell overhead press: elbows bent under the wrists with the dumbbells by the ears, pressed up and in to nearly straight arms.
  35:u=>{const t=cycleT(u,.5);
   return pose({t,...upright(),hands:(s,T)=>{const sh=T.shoulder(s),lo=[s*.737,sh[1]+.29,sh[2]+.145],hi=[s*.44,sh[1]+.865,sh[2]];
