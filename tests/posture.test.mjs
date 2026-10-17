@@ -438,3 +438,9 @@ test('triceps pushdown keeps the elbows pinned and runs the cable from a high pu
   for(const i of legs){const q=m.getVertexPosition(i,new THREE.Vector3()).applyMatrix4(m.matrixWorld);if(Math.abs(q.y-bar.y)<.05&&Math.abs(q.x)<.25)front=Math.max(front,q.z);}
   assert.ok(bar.z-.02>front&&bar.z-front<=.12,`pushdown finish bar ${(bar.z-front).toFixed(3)} in front of the thighs`);}
 });
+
+test('a model rebuild bakes clips only for the exercises the model ships with',async()=>{
+ const {createExerciseClips}=await import('../dist/rig.js'),{bakedIds}=await import('../dist/exercises.js');
+ const names=createExerciseClips(athlete.group,athlete.map).map(c=>c.name);
+ assert.deepEqual(names,bakedIds.map(id=>'Exercise_'+id));
+});
