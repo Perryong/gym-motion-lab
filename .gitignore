@@ -3,3 +3,7 @@ node_modules/
 .env
 .DS_Store
 .playwright-mcp/
+tests/rules/node_modules/
+firebase-debug.log
+firestore-debug.log
+.superpowers/
