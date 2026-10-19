@@ -163,3 +163,4 @@ a.pill{text-decoration:none}
 
 /* Muscles toggle without an overlay for the group */
 .viewer-tools button:disabled{opacity:.4;cursor:not-allowed}
+.account-form .field{margin-top:0}.account-form .data-actions{margin-top:12px}.backup-note{margin-top:18px}.ghost.danger{color:#ff8f7a}a.ghost{text-decoration:none}.app-head #home-signin{text-decoration:none;align-self:center}

@@ -6,6 +6,10 @@ The exercise library covers three body groups — 18 chest, 6 leg and 6 core exe
 
 Serve `dist` over HTTP. Native modules do not load from a `file://` URL. On deploy, `scripts/version-assets.mjs` appends `?v=<commit>` to every relative `.js`/`.css` reference in the uploaded copy, so browsers never mix cached and new modules; the source in `dist` stays unversioned. Three.js 0.185.1 and matching r185 addons are vendored with the MIT license. Firebase JS SDK 12.19.0 (app, auth, firestore) is vendored in `dist/vendor/firebase` under Apache-2.0; regenerate with `node scripts/vendor-firebase.mjs <version>`. No model service, API key or runtime external asset host is required.
 
+## Accounts
+
+FORM works as before without an account; guest data stays in localStorage. Signing in (Stats → Account, email link, no password) keeps the plan, workout in progress, weigh-ins, goal and finished workouts in Cloud Firestore under `apps/form/users/{uid}` in the Firebase project `task-list-6a69a`, shared with other apps. On first sign-in, guest data is uploaded to an empty account or, with confirmation, merged into an existing one. Firebase loads after first paint, so a failed load leaves the app a guest app. Security rules live in `firestore.rules` (the project's other rules are kept verbatim) and are tested against the Firestore emulator: `cd tests/rules && npm install && npm test` (needs Java 21). Publish them in the Firebase console before deploying account features. Privacy notice: `dist/privacy.html`.
+
 ## Athlete
 
 The athlete is "Charter T-Pose" by Tim0, from Sketchfab (https://sketchfab.com/3d-models/558a75ed32274e0d868ac22468565453), licensed CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). It was refitted to FORM's own skeleton: the mesh was re-posed onto the rig's rest joints, re-weighted to FORM bone names from the model's original skin weights, and given a Muscles-highlight region on the shirt's chest panel. Textures ship as JPEGs beside `dist/assets/athlete.glb` and are applied by `athlete.js`.
@@ -41,7 +45,10 @@ To regenerate after editing `scripts/library-ids.json` (`include` lists dataset 
 - `scene.js`: lighting, equipment and camera.
 - `app.js`: hash router (`#home`, `#stats`, `#exercises`, `#exercise/<id>`, `#plan`, `#workout`), day picker and toast.
 - `studio-view.js`: studio interaction and rendering lifecycle; one viewer shared by the detail and workout views.
-- `store.js`: plan, workout, history, body weight and goal, validated on load from localStorage.
+- `store.js`: plan, workout, history, body weight and goal, validated on load from localStorage or the cloud.
+- `cloud.js`: the only Firebase module — email-link sign-in and FORM's Firestore documents.
+- `sync.js`: pure conversion, guest merge, save debouncing and error wording for the cloud (tested in node).
+- `account-view.js`: Stats → Account card and the confirm-email dialog.
 - `stats.js`: streaks, monthly counts, weight change, heatmap, calendar grid and muscle-balance figures (pure).
 - `charts.js`: SVG weight chart, heatmap and body figure.
 - `home-view.js`, `stats-view.js`: Home and Stats screens.

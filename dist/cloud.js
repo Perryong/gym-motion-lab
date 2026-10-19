@@ -20,15 +20,18 @@ export async function sendLink(email){
  remember(email);
 }
 // 'none' when this page load is not a sign-in link; askEmail() covers a link opened on another device or browser.
+// The link's query is removed whatever happens, so a reload never replays a used or cancelled link.
 export async function finishLink(askEmail){
- if(!isSignInWithEmailLink(auth,location.href))return 'none';
+ const href=location.href;
+ if(!isSignInWithEmailLink(auth,href))return 'none';
+ history.replaceState(null,'',location.origin+location.pathname+location.hash);
  const email=recall()??await askEmail();
  if(!email)return 'cancelled';
- await signInWithEmailLink(auth,email,location.href);
- forget();history.replaceState(null,'',location.origin+location.pathname+location.hash);
+ await signInWithEmailLink(auth,email,href);
+ forget();
  return 'signed-in';
 }
-export const onUser=cb=>onAuthStateChanged(auth,u=>cb(u?{uid:u.uid,email:u.email,emailVerified:u.emailVerified}:null));
+export const onUser=cb=>onAuthStateChanged(auth,u=>cb(u?{uid:u.uid,email:u.email,emailVerified:u.emailVerified,signedInAt:Date.parse(u.metadata.lastSignInTime)||0}:null));
 export const signOut=()=>authSignOut(auth);
 
 export async function loadCloud(uid){
