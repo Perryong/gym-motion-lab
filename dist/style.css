@@ -27,6 +27,7 @@ a{color:inherit}
 .icon{background:var(--card-2);border:0;border-radius:10px;min-width:40px;min-height:40px;font-size:18px}
 .icon:disabled{opacity:.3;cursor:default}
 .add{display:block;background:none;border:0;color:var(--lime);font-size:16px;padding:12px 0 0;text-decoration:none;text-align:left}
+.set-actions{display:flex;justify-content:space-between}.add.remove{color:var(--muted)}.add.remove:disabled{opacity:.4}
 .search{width:100%;background:var(--card);border:0;border-radius:14px;padding:14px 16px;color:var(--text);font-size:17px}
 .chips{display:flex;gap:8px;overflow-x:auto;padding:14px 0}
 .chip{background:var(--card);border-radius:999px;padding:7px 16px;text-decoration:none;white-space:nowrap}
