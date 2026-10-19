@@ -4,7 +4,7 @@ Mobile-first workout app: a Home dashboard (month training calendar, today's wor
 
 The exercise library covers three body groups — 18 chest, 6 leg and 6 core exercises — filterable as `#exercises/chest`, `/legs`, `/abs` (old `#chest` links still work); each opens the studio at `#exercise/<id>`, a custom skinned athlete, exercise equipment, orbit/zoom, camera presets, play/pause, speed and scrub controls, muscle highlights and written form cues.
 
-Serve `dist` over HTTP. Native modules do not load from a `file://` URL. On deploy, `scripts/version-assets.mjs` appends `?v=<commit>` to every relative `.js`/`.css` reference in the uploaded copy, so browsers never mix cached and new modules; the source in `dist` stays unversioned. Three.js 0.185.1 and matching r185 addons are vendored with the MIT license. No model service, API key or runtime external asset host is required.
+Serve `dist` over HTTP. Native modules do not load from a `file://` URL. On deploy, `scripts/version-assets.mjs` appends `?v=<commit>` to every relative `.js`/`.css` reference in the uploaded copy, so browsers never mix cached and new modules; the source in `dist` stays unversioned. Three.js 0.185.1 and matching r185 addons are vendored with the MIT license. Firebase JS SDK 12.19.0 (app, auth, firestore) is vendored in `dist/vendor/firebase` under Apache-2.0; regenerate with `node scripts/vendor-firebase.mjs <version>`. No model service, API key or runtime external asset host is required.
 
 ## Athlete
 
