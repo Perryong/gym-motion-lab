@@ -10,6 +10,15 @@ Follows `2026-10-11-workout-app-design.md` and `2026-10-11-home-stats-design.md`
 
 ## Shared project
 
+Console inspected 2026-10-20 (read-only):
+
+- Plan **Blaze** (pay as you go). Firestore `(default)` exists with `config`, `orders`, `privateOrders`, `requests` — the 3D-printing shop (`3d-printing-webapps.vercel.app`). No `apps` collection yet.
+- Existing rules: owner-only reads via a custom `owner` claim, customers read their own `orders`, and a catch-all `allow write: if false`. Nothing is readable by an arbitrary signed-in user, so adding FORM's block does not expose shop data. Rules are OR-ed, so the catch-all does not block FORM's own `allow`.
+- Auth providers: Email/Password **on**, Email link **off**, Anonymous **on** (used by the shop). Account linking: "Link accounts that use the same email". 9 existing users.
+- Authorized domains: `localhost`, the two Firebase defaults, `3d-printing-webapps.vercel.app`. `perryong.github.io` is missing.
+- Web apps registered: `APP1`, `App2-file`. FORM gets its own.
+
+
 - One Auth user list for every app in the project: an existing `task-list-6a69a` user signs in to FORM with the same email and gets the same uid. FORM data starts empty for them.
 - FORM owns only `apps/form/**` in Firestore. Other apps use their own top-level paths.
 - Free-tier quotas (about 50k reads / 20k writes per day) are shared across the project's apps.
@@ -66,17 +75,21 @@ Before editing, read the project's current rules. FORM's block is added beside t
 match /apps/form/users/{uid} {
   allow read, delete: if request.auth != null && request.auth.uid == uid;
   allow create, update: if request.auth != null && request.auth.uid == uid
+    && request.auth.token.email_verified == true
     && request.resource.data.schema == 1
     && request.resource.data.weights.size() <= 2000;
   match /workouts/{id} {
     allow read, delete: if request.auth != null && request.auth.uid == uid;
     allow create, update: if request.auth != null && request.auth.uid == uid
+      && request.auth.token.email_verified == true
       && request.resource.data.started is int
       && id == string(request.resource.data.started)
       && request.resource.data.entries.size() <= 50;
   }
 }
 ```
+
+The block goes inside the existing `match /databases/{database}/documents`. `email_verified` (true after an email-link sign-in) keeps the shop's anonymous users from creating FORM data, which matters on a Blaze plan.
 
 ## Delete account and privacy
 
@@ -98,6 +111,7 @@ match /apps/form/users/{uid} {
 3. Firestore: create the database if the project has none (production mode).
 4. Project settings → add a web app "FORM"; copy its config into `firebase-config.js`.
 5. Firestore → Rules: publish the merged rules after the emulator tests pass.
+6. Billing: a budget alert on the Blaze plan before opening public sign-ups. App Check is a later hardening step.
 
 ## Out of scope
 
