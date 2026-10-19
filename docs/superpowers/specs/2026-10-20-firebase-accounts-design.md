@@ -106,10 +106,10 @@ The block goes inside the existing `match /databases/{database}/documents`. `ema
 
 ## Console setup (owner approves each step)
 
-1. Authentication → Sign-in method: enable Email/Password with **Email link (passwordless sign-in)**.
-2. Authentication → Settings → Authorized domains: add `perryong.github.io` (`localhost` is there by default).
-3. Firestore: create the database if the project has none (production mode).
-4. Project settings → add a web app "FORM"; copy its config into `firebase-config.js`.
+1. ✅ 2026-10-20 — Authentication → Sign-in method: enable Email/Password with **Email link (passwordless sign-in)**.
+2. ✅ 2026-10-20 — Authentication → Settings → Authorized domains: add `perryong.github.io` (`localhost` is there by default).
+3. ✅ Firestore `(default)` already exists.
+4. ✅ 2026-10-20 — web app "FORM" registered (no Hosting); config in `dist/firebase-config.js`.
 5. Firestore → Rules: publish the merged rules after the emulator tests pass.
 6. Billing: a budget alert on the Blaze plan before opening public sign-ups. App Check is a later hardening step.
 
