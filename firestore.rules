@@ -1,0 +1,26 @@
+rules_version = '2';
+service cloud.firestore {
+ match /databases/{database}/documents {
+  function owner() { return request.auth != null && request.auth.token.owner == true; }
+  match /orders/{id} { allow read: if request.auth != null && (owner() || resource.data.customerUid == request.auth.uid); }
+  match /privateOrders/{id} { allow read: if owner(); }
+  match /config/{id} { allow read: if owner(); }
+  // FORM (gym-motion-lab): each verified user owns apps/form/users/{uid} and its workouts.
+  match /apps/form/users/{uid} {
+   allow read, delete: if request.auth != null && request.auth.uid == uid;
+   allow create, update: if request.auth != null && request.auth.uid == uid
+    && request.auth.token.email_verified == true
+    && request.resource.data.schema == 1
+    && request.resource.data.weights.size() <= 2000;
+   match /workouts/{id} {
+    allow read, delete: if request.auth != null && request.auth.uid == uid;
+    allow create, update: if request.auth != null && request.auth.uid == uid
+     && request.auth.token.email_verified == true
+     && request.resource.data.started is int
+     && id == string(request.resource.data.started)
+     && request.resource.data.entries.size() <= 50;
+   }
+  }
+  match /{document=**} { allow write: if false; }
+ }
+}
