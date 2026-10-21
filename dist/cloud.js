@@ -40,6 +40,7 @@ export async function loadCloud(uid){
 }
 // Remote changes only: snapshots of this tab's own pending writes are skipped.
 export const watchUser=(uid,cb)=>onSnapshot(userRef(uid),snap=>{if(snap.exists()&&!snap.metadata.hasPendingWrites)cb(snap.data());});
+export const watchWorkouts=(uid,cb)=>onSnapshot(workoutsRef(uid),snap=>cb(snap.docs.map(d=>d.data())));
 export const saveUser=(uid,state)=>setDoc(userRef(uid),toUserDoc(state));
 // Each batch is one atomic write of at most chunks()' size.
 const write=async(ops)=>{for(const part of chunks(ops)){const b=writeBatch(db);for(const op of part)op(b);await b.commit();}};

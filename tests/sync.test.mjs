@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {test,mock} from 'node:test';
 import {normalize} from '../dist/store.js';
-import {SCHEMA,toUserDoc,toWorkoutDoc,workoutId,fromCloud,hasGuestData,mergeGuest,chunks,debounced,cloudMessage} from '../dist/sync.js';
+import {SCHEMA,toUserDoc,toWorkoutDoc,workoutId,fromCloud,hasGuestData,mergeGuest,chunks,debounced,cloudMessage,deleteMark,pendingDelete,sameUserDoc,warnOnce} from '../dist/sync.js';
 
 const workout=(started,id=4)=>({day:'mon',name:'',started,finished:started+3600e3,entries:[{id,sets:[{kg:60,reps:10,done:true}]}]});
 const state=(extra={})=>normalize(JSON.stringify({plan:{},weights:[],history:[],...extra}));
@@ -97,4 +97,30 @@ test('cloud errors in plain words',()=>{
  assert.equal(m('permission-denied'),'Your account could not be saved. Your changes stay on this screen.');
  assert.equal(m('weird'),'Something went wrong. Try again.');
  assert.equal(cloudMessage(null),'Something went wrong. Try again.');
+});
+
+test('a delete mark only resumes for the same account within an hour',()=>{
+ const NOW=1_000_000_000,mark=deleteMark('alice',NOW);
+ assert.equal(pendingDelete(mark,'alice',NOW+59*60e3),true);
+ assert.equal(pendingDelete(mark,'bob',NOW+1000),false,'another person signing in on this device');
+ assert.equal(pendingDelete(mark,'alice',NOW+61*60e3),false,'an old mark expires');
+ assert.equal(pendingDelete(mark,'alice',NOW-1000),false,'a mark from the future is ignored');
+ for(const bad of [null,'','1','{}','{"uid":"alice"}','not json'])assert.equal(pendingDelete(bad,'alice',NOW),false,String(bad));
+});
+
+test('a remote user document equal to local state is not news',()=>{
+ const s=full();
+ assert.equal(sameUserDoc(s,toUserDoc(s,1)),true,'update time is ignored');
+ assert.equal(sameUserDoc(s,toUserDoc({...s,goal:70},1)),false);
+ assert.equal(sameUserDoc(s,{...toUserDoc(s,1),weights:[]}),false);
+ const d=toUserDoc(s,1),shuffled={weights:d.weights.map(w=>({kg:w.kg,date:w.date})),goal:d.goal,updated:9,active:d.active,plan:d.plan,schema:1};
+ assert.equal(sameUserDoc(s,shuffled),true,'Firestore may return fields in another order');
+});
+
+test('a save failure warns once until a save succeeds',()=>{
+ const shown=[],w=warnOnce(m=>shown.push(m));
+ w.fail({code:'permission-denied'});w.fail({code:'permission-denied'});w.fail({code:'unavailable'});
+ assert.deepEqual(shown,['Your account could not be saved. Your changes stay on this screen.']);
+ w.ok();w.fail({code:'permission-denied'});
+ assert.equal(shown.length,2);
 });
