@@ -42,3 +42,20 @@ const MESSAGES={
  'permission-denied':'Your account could not be saved. Your changes stay on this screen.',
 };
 export const cloudMessage=error=>MESSAGES[error?.code]??'Something went wrong. Try again.';
+// "Finish deleting after the fresh link" mark: tied to one account and valid for an hour, so it can never delete a later or different sign-in.
+const DELETE_WINDOW_MS=60*60e3;
+export const deleteMark=(uid,now=Date.now())=>JSON.stringify({uid,at:now});
+export function pendingDelete(raw,uid,now=Date.now()){
+ let m;try{m=JSON.parse(raw);}catch{return false;}
+ return !!m&&m.uid===uid&&typeof m.at==='number'&&now>=m.at&&now-m.at<DELETE_WINDOW_MS;
+}
+// True when a remote user document says nothing new. Both sides go through normalize(), so field order and update time do not matter.
+export function sameUserDoc(state,doc){
+ const canon=s=>JSON.stringify(toUserDoc(normalize(JSON.stringify({...s,history:[]})),0));
+ return canon(state)===canon(JSON.parse(fromCloud(doc,[])));
+}
+// One toast per run of failed saves; a successful save re-arms it.
+export function warnOnce(show){
+ let warned=false;
+ return {fail(e){if(!warned){warned=true;show(cloudMessage(e));}},ok(){warned=false;}};
+}

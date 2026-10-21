@@ -8,7 +8,7 @@ Serve `dist` over HTTP. Native modules do not load from a `file://` URL. On depl
 
 ## Accounts
 
-FORM works as before without an account; guest data stays in localStorage. Signing in (Stats → Account, email link, no password) keeps the plan, workout in progress, weigh-ins, goal and finished workouts in Cloud Firestore under `apps/form/users/{uid}` in the Firebase project `task-list-6a69a`, shared with other apps. On first sign-in, guest data is uploaded to an empty account or, with confirmation, merged into an existing one. Firebase loads after first paint, so a failed load leaves the app a guest app. Security rules live in `firestore.rules` (the project's other rules are kept verbatim) and are tested against the Firestore emulator: `cd tests/rules && npm install && npm test` (needs Java 21). Publish them in the Firebase console before deploying account features. Privacy notice: `dist/privacy.html`.
+FORM works as before without an account; guest data stays in localStorage. Signing in (Stats → Account, email link, no password) keeps the plan, workout in progress, weigh-ins, goal and finished workouts in Cloud Firestore under `apps/form/users/{uid}` in FORM's own Firebase project `gym-motion` (Spark plan, `asia-southeast1`). On first sign-in, guest data is uploaded to an empty account or, with confirmation, merged into an existing one. Firebase loads after first paint, so a failed load leaves the app a guest app. Security rules live in `firestore.rules` and are tested against the Firestore emulator: `cd tests/rules && npm install && npm test` (needs Java 21). After changing them, publish the same file in the Firebase console (Firestore → Rules). Privacy notice: `dist/privacy.html`.
 
 ## Athlete
 

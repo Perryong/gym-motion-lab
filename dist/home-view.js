@@ -42,7 +42,7 @@ function renderWeight(state){
  const w=state.weights,latest=w.at(-1),prev=w.at(-2),goal=state.goal;
  const delta=latest&&prev?Math.round((latest.kg-prev.kg)*10)/10:null;
  $('weight-goal').textContent=goal===null?'':`◎ ${goal}`;
- $('weight-now').replaceChildren(...(latest?[el('strong',{},String(latest.kg)),el('span',{},' kg'),delta?el('em',{class:goalTrend(prev.kg,latest.kg,goal)},`${delta<0?'↓':'↑'} ${Math.abs(delta)}`):null,el('small',{},new Date(latest.date+'T12:00').toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'}))]:[el('span',{class:'muted'},'No weight logged yet')]));
+ $('weight-now').replaceChildren(...(latest?[el('strong',{},String(latest.kg)),el('span',{},' kg'),delta?el('em',{class:goalTrend(prev.kg,latest.kg,goal)},`${delta<0?'↓':'↑'} ${Math.abs(delta)}`):'',el('small',{},new Date(latest.date+'T12:00').toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'}))]:[el('span',{class:'muted'},'No weight logged yet')]));
  $('weight-target').textContent=goal!==null&&latest?(latest.kg===goal?'◎ Goal reached':`◎ Goal ${goal} kg · ${Math.abs(Math.round((latest.kg-goal)*10)/10)} kg to ${latest.kg>goal?'lose':'gain'}`):'';
  $('weight-chart').innerHTML=weightChart(w,goal);
 }

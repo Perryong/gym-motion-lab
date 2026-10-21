@@ -9,21 +9,20 @@ import {renderHome} from './home-view.js';
 import {renderStats} from './stats-view.js';
 import {renderTextExercise} from './text-exercise-view.js';
 import {$,el,toast} from './ui.js';
-import {hasGuestData,mergeGuest,fromCloud,workoutId,debounced,cloudMessage} from './sync.js';
+import {hasGuestData,mergeGuest,fromCloud,workoutId,debounced,cloudMessage,deleteMark,pendingDelete,sameUserDoc,warnOnce} from './sync.js';
 import {renderAccount,askEmail} from './account-view.js';
 const state=load();
 let warned=false,back='#home',current=null,wantAccount=false;
 // Account session: cloud is the lazily loaded cloud.js; while user is set, commit() writes to Firestore and never to gml.v1.
-let cloud=null,user=null,saver=null,unwatch=null,synced=new Set(),sentTo=null,resumeDelete=false;
+let cloud=null,user=null,saver=null,warn=null,unwatch=null,synced=new Set(),sentTo=null,justLinked=false;
 const DELETE_KEY='gml.delete-pending',RECENT_MS=4*60e3;
-const flag=(on)=>{try{on?localStorage.setItem(DELETE_KEY,'1'):localStorage.removeItem(DELETE_KEY);}catch{}};
-const flagged=()=>{try{return localStorage.getItem(DELETE_KEY)==='1';}catch{return false;}};
+const mark=v=>{try{v===undefined?void 0:v===null?localStorage.removeItem(DELETE_KEY):localStorage.setItem(DELETE_KEY,v);return localStorage.getItem(DELETE_KEY);}catch{return null;}};
 function commit(){
  if(!user){if(!save(state)&&!warned){warned=true;toast('Storage is unavailable; changes last until you close this tab.');}return;}
  saver.call(state);
  // Finished workouts are their own documents; failed ones are retried on the next commit.
  const fresh=state.history.filter(h=>!synced.has(workoutId(h)));
- if(fresh.length){fresh.forEach(h=>synced.add(workoutId(h)));cloud.addWorkouts(user.uid,fresh).catch(e=>{fresh.forEach(h=>synced.delete(workoutId(h)));toast(cloudMessage(e));});}
+ if(fresh.length){fresh.forEach(h=>synced.add(workoutId(h)));cloud.addWorkouts(user.uid,fresh).catch(e=>{fresh.forEach(h=>synced.delete(workoutId(h)));warn.fail(e);});}
 }
 function showInSlot(id,slot){attachViewer(slot);selectExercise(id);}
 function pickDay(id){
@@ -71,21 +70,21 @@ $('import-data').onchange=async e=>{
 };
 function renderAccountCard(){
  renderAccount({user,sentTo,status:navigator.onLine?'synced':'offline, will sync',
-  onSend:async email=>{if(!cloud){toast('Accounts are unavailable right now. Try again when online.');return;}try{await cloud.sendLink(email);sentTo=email;renderAccountCard();}catch(e){toast(cloudMessage(e));}},
+  onSend:async email=>{if(!cloud){toast('Accounts are unavailable right now. Try again when online.');return;}try{await cloud.sendLink(email);mark(null);sentTo=email;renderAccountCard();}catch(e){toast(cloudMessage(e));}},
   onReset:()=>{sentTo=null;renderAccountCard();},
-  onSignOut:async()=>{saver.flush();await cloud.signOut();toast('Signed out');},
+  onSignOut:async()=>{saver?.flush();await cloud.signOut();toast('Signed out');},
   onDelete:removeAccount});
 }
 // Firebase only deletes a login right after a sign-in; otherwise a fresh link finishes the deletion when opened.
 async function relink(){
- await cloud.sendLink(user.email);flag(true);
+ await cloud.sendLink(user.email);mark(deleteMark(user.uid));
  toast('For your safety, open the new link we just emailed to finish deleting.');
 }
 async function removeAccount(){
  if(!confirm('Delete your FORM account and all its workouts and weigh-ins? Data saved on this device as a guest stays.'))return;
  try{
   if(Date.now()-user.signedInAt>RECENT_MS){await relink();return;}
-  saver.flush();await cloud.deleteAccount(user.uid);toast('Account deleted');
+  saver?.flush();await cloud.deleteAccount(user.uid);toast('Account deleted');
  }catch(e){
   if(e?.code!=='auth/requires-recent-login'){toast(cloudMessage(e));return;}
   try{await relink();await cloud.signOut();}catch(e2){toast(cloudMessage(e2));}
@@ -94,8 +93,15 @@ async function removeAccount(){
 async function onUser(u){
  unwatch?.();unwatch=null;
  if(!u){user=null;saver=null;Object.assign(state,load());route();return;}
- if(resumeDelete){resumeDelete=false;flag(false);user=u;
-  try{await cloud.deleteAccount(u.uid);toast('Account deleted');}catch(e){toast(cloudMessage(e));}return;}
+ // The fresh link sent by Delete account: finish only for that same account, within the hour, after asking again.
+ const resume=justLinked&&pendingDelete(mark(),u.uid);justLinked=false;
+ if(mark()&&!resume)mark(null);
+ if(resume){mark(null);
+  if(confirm('Finish deleting your FORM account and all its workouts and weigh-ins?')){
+   try{await cloud.deleteAccount(u.uid);toast('Account deleted');}catch(e){toast(cloudMessage(e));cloud.signOut().catch(()=>{});}
+   return;
+  }
+ }
  try{
   const {user:doc,workouts}=await cloud.loadCloud(u.uid),account=normalize(fromCloud(doc,workouts)),guest=load();
   let next=account;
@@ -106,11 +112,31 @@ async function onUser(u){
   }
   else if(!doc)await cloud.saveUser(u.uid,account);
   user=u;sentTo=null;Object.assign(state,next);synced=new Set(state.history.map(workoutId));
-  saver=debounced(s=>cloud.saveUser(u.uid,s),1000,e=>toast(cloudMessage(e)));
+  warn=warnOnce(toast);
+  saver=debounced(s=>cloud.saveUser(u.uid,s).then(()=>warn.ok()),1000,e=>warn.fail(e));
   // Another device changed the account: take its plan, workout in progress, weigh-ins and goal unless a local save is waiting.
-  unwatch=cloud.watchUser(u.uid,d=>{if(saver.pending)return;const r=normalize(fromCloud(d,[]));Object.assign(state,{plan:r.plan,active:r.active,weights:r.weights,goal:r.goal});route();});
+  const stopUser=cloud.watchUser(u.uid,d=>{
+   if(saver.pending||sameUserDoc(state,d))return;
+   const r=normalize(fromCloud(d,[]));Object.assign(state,{plan:r.plan,active:r.active,weights:r.weights,goal:r.goal});refresh();
+  });
+  // Workouts finished on another device; local ones not yet stored stay in the list.
+  const stopWorkouts=cloud.watchWorkouts(u.uid,docs=>{
+   const remote=normalize(fromCloud(null,docs)).history,ids=new Set(remote.map(h=>h.started));
+   const next=[...remote,...state.history.filter(h=>!ids.has(h.started))].sort((a,b)=>a.started-b.started);
+   if(next.map(h=>h.started).join()===state.history.map(h=>h.started).join())return;
+   state.history=next;remote.forEach(h=>synced.add(workoutId(h)));refresh();
+  });
+  unwatch=()=>{stopUser();stopWorkouts();};
   route();
- }catch(e){toast(cloudMessage(e));}
+ }catch(e){
+  // A sign-in whose account could not be loaded is undone, so the screen never shows a guest who is secretly signed in.
+  toast(cloudMessage(e));cloud.signOut().catch(()=>{});
+ }
+}
+// Re-render for remote changes without jumping to the top or wiping a field being typed in.
+function refresh(){
+ if(document.activeElement?.closest?.('#app')&&/^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName))return;
+ const y=scrollY;route();scrollTo(0,y);
 }
 addEventListener('hashchange',route);route();
 $('home-signin').onclick=()=>{wantAccount=true;};
@@ -119,6 +145,6 @@ for(const ev of ['online','offline'])addEventListener(ev,()=>{if(current==='stat
 // Firebase loads after first paint; if it cannot load, the app stays a guest app.
 import('./cloud.js').then(async c=>{
  cloud=c;
- try{if(await c.finishLink(askEmail)==='signed-in'){resumeDelete=flagged();toast('Signed in');}}catch(e){toast(cloudMessage(e));}
+ try{if(await c.finishLink(askEmail)==='signed-in'){justLinked=true;toast('Signed in');}}catch(e){toast(cloudMessage(e));}
  c.onUser(onUser);route();
 }).catch(()=>{});

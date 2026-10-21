@@ -1,5 +1,7 @@
 # Accounts and cloud sync with Firebase — design
 
+> **2026-10-21 change:** FORM moved to its own Firebase project **`gym-motion`** (Spark plan, Firestore `asia-southeast1`, email link on, Anonymous off, `perryong.github.io` authorized, rules published). Sharing `task-list-6a69a` with the 3D-print shop coupled the two repos' rules deploys (the shop's `deploy:checkout` would overwrite FORM's block), put FORM on the shop's Blaze bill and shared the sign-in email name. Sections below that describe the shared project are kept as the decision record; `firestore.rules` is now FORM-only.
+
 Follows `2026-10-11-workout-app-design.md` and `2026-10-11-home-stats-design.md`. Turns FORM from a single-device app into one with public accounts, while keeping guest use exactly as it is today.
 
 ## Brief

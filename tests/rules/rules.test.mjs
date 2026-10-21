@@ -1,4 +1,4 @@
-// Firestore rules for the shared project: FORM's block plus the shop's existing rules. Run with `npm test` here (needs Java 21).
+// Firestore rules for FORM's project (gym-motion). Run with `npm test` here (needs Java 21).
 import {test,before,after,beforeEach} from 'node:test';
 import {readFileSync} from 'node:fs';
 import {initializeTestEnvironment,assertFails,assertSucceeds} from '@firebase/rules-unit-testing';
@@ -11,10 +11,7 @@ beforeEach(async()=>{
  await env.clearFirestore();
  await env.withSecurityRulesDisabled(async ctx=>{
   const db=ctx.firestore();
-  await setDoc(doc(db,'orders/o1'),{customerUid:'alice'});
-  await setDoc(doc(db,'orders/o2'),{customerUid:'bob'});
-  await setDoc(doc(db,'privateOrders/p1'),{x:1});
-  await setDoc(doc(db,'config/business'),{x:1});
+  await setDoc(doc(db,'other/x'),{x:1});
   await setDoc(doc(db,'apps/form/users/alice'),userDoc());
   await setDoc(doc(db,'apps/form/users/alice/workouts/123'),workoutDoc(123));
  });
@@ -65,12 +62,9 @@ test('owner can delete their data',async()=>{
  await assertSucceeds(deleteDoc(doc(a,ALICE)));
 });
 
-test('shop rules are unchanged',async()=>{
- const a=db('alice'),owner=db('shop',{owner:true});
- await assertSucceeds(getDoc(doc(a,'orders/o1')));
- for(const path of ['orders/o2','privateOrders/p1','config/business'])await assertFails(getDoc(doc(a,path)));
- for(const path of ['orders/o1','orders/o2','privateOrders/p1','config/business'])await assertSucceeds(getDoc(doc(owner,path)));
- for(const ctx of [a,owner])await assertFails(setDoc(doc(ctx,'orders/o1'),{customerUid:'alice'}));
- await assertFails(getDoc(doc(nobody(),'orders/o1')));
- await assertFails(getDoc(doc(a,'apps/other/users/alice')));
+test('everything outside FORM is denied',async()=>{
+ for(const ctx of [db('alice'),nobody()]){
+  for(const path of ['other/x','apps/form','apps/other/users/alice'])await assertFails(getDoc(doc(ctx,path)));
+  await assertFails(setDoc(doc(ctx,'other/y'),{x:1}));
+ }
 });
