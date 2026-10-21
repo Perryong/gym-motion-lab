@@ -38,8 +38,9 @@ export async function loadCloud(uid){
  const [user,workouts]=await Promise.all([getDoc(userRef(uid)),getDocs(workoutsRef(uid))]);
  return {user:user.exists()?user.data():null,workouts:workouts.docs.map(d=>d.data())};
 }
-// Remote changes only: snapshots of this tab's own pending writes are skipped.
-export const watchUser=(uid,cb)=>onSnapshot(userRef(uid),snap=>{if(snap.exists()&&!snap.metadata.hasPendingWrites)cb(snap.data());});
+// Every snapshot, pending ones included: another tab's write arrives here as pending and its server confirmation
+// is metadata-only, so skipping pending snapshots would drop it. app.js ignores echoes of its own state (sameUserDoc).
+export const watchUser=(uid,cb)=>onSnapshot(userRef(uid),snap=>{if(snap.exists())cb(snap.data());});
 export const watchWorkouts=(uid,cb)=>onSnapshot(workoutsRef(uid),snap=>cb(snap.docs.map(d=>d.data())));
 export const saveUser=(uid,state)=>setDoc(userRef(uid),toUserDoc(state));
 // Each batch is one atomic write of at most chunks()' size.
