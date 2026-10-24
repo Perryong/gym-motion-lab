@@ -36,6 +36,8 @@ const MESSAGES={
  'auth/missing-email':'That email address looks wrong.',
  'auth/invalid-action-code':'This sign-in link has expired or was already used. Send a new one.',
  'auth/expired-action-code':'This sign-in link has expired or was already used. Send a new one.',
+ // Firebase console: Authentication → Email/Password → Email link switch is off.
+ 'auth/operation-not-allowed':'Email sign-in is turned off right now. Try again later.',
  'auth/too-many-requests':'Too many attempts. Try again in a few minutes.',
  'auth/network-request-failed':'You are offline. Try again when connected.',
  'unavailable':'You are offline. Try again when connected.',

@@ -92,6 +92,7 @@ test('cloud errors in plain words',()=>{
  const m=code=>cloudMessage({code});
  assert.equal(m('auth/invalid-email'),'That email address looks wrong.');
  for(const c of ['auth/invalid-action-code','auth/expired-action-code'])assert.equal(m(c),'This sign-in link has expired or was already used. Send a new one.');
+ assert.equal(m('auth/operation-not-allowed'),'Email sign-in is turned off right now. Try again later.');
  assert.equal(m('auth/too-many-requests'),'Too many attempts. Try again in a few minutes.');
  for(const c of ['auth/network-request-failed','unavailable'])assert.equal(m(c),'You are offline. Try again when connected.');
  assert.equal(m('permission-denied'),'Your account could not be saved. Your changes stay on this screen.');
