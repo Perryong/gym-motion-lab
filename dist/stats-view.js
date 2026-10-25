@@ -25,11 +25,21 @@ function renderLifts(state){
  const series=liftSeries(state.history).filter(l=>exerciseById(l.id));
  if(!series.length){$('lifts').replaceChildren(el('p',{class:'muted chart-empty'},'Finish a workout with weighted sets to see your lifts.'));return;}
  const body=el('div'),draw=current=>{
-  lift=current.id;const all=current.days.flatMap(d=>d.kgs),chart=el('div');chart.innerHTML=liftChart(current.days);
+  lift=current.id;const all=current.days.flatMap(d=>d.kgs),chart=el('div'),readout=el('span',{class:'lift-readout','aria-live':'polite'},'Tap a dot to see that set');chart.innerHTML=liftChart(current.days);
+  // Hover titles never show on touch, so a tap picks the nearest dot and shows its title as text.
+  chart.onclick=e=>{
+   const svg=chart.querySelector('svg'),p=new DOMPoint(e.clientX,e.clientY).matrixTransform(svg.getScreenCTM().inverse());
+   const dots=[...svg.querySelectorAll('.set')].map(c=>({c,d:Math.hypot(c.cx.baseVal.value-p.x,c.cy.baseVal.value-p.y)})).sort((a,b)=>a.d-b.d),near=dots[0];
+   if(!near||near.d>16)return;
+   // Equal sets on one day share a spot, so name them all.
+   const title=c=>c.parentNode.querySelector('title').textContent,same=dots.filter(x=>x.d===near.d).map(x=>title(x.c).match(/set (\d+)/)[1]);
+   svg.querySelector('.picked')?.classList.remove('picked');near.c.classList.add('picked');
+   readout.textContent=same.length>1?title(near.c).replace(/set \d+/,`sets ${same.join(', ')}`):title(near.c);
+  };
   body.replaceChildren(
    el('p',{class:'lift-summary'},el('strong',{},`${Math.max(...all)} kg`),el('span',{class:'muted'},` best · ${current.days.length} workout day${current.days.length===1?'':'s'}`)),
    chart,
-   el('div',{class:'lift-legend','aria-hidden':'true'},el('span',{},el('i',{class:'swatch-line'}),'Heaviest set'),el('span',{},el('i',{class:'swatch-dot'}),'Each set')));
+   el('div',{class:'lift-foot'},el('div',{class:'lift-legend','aria-hidden':'true'},el('span',{},el('i',{class:'swatch-line'}),'Heaviest set'),el('span',{},el('i',{class:'swatch-dot'}),'Each set')),readout));
  };
  const current=series.find(l=>l.id===lift)??series[0];
  $('lifts').replaceChildren(el('select',{class:'lift-select','aria-label':'Exercise',onchange:e=>draw(series[e.target.selectedIndex])},...series.map(l=>el('option',{selected:l===current},exerciseById(l.id).name))),body);
