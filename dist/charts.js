@@ -15,6 +15,21 @@ export function weightChart(weights,goal,now=Date.now(),days=90){
  const goalLine=goal===null?'':`<line x1="${L}" x2="${W-R}" y1="${f(Y(goal))}" y2="${f(Y(goal))}" class="goal"/><text x="${W-R}" y="${f(Y(goal)-5)}" text-anchor="end" class="goal-label">${goal}</text>`;
  return `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img" aria-label="Body weight over the last ${days} days, latest ${last.y} kg${goal===null?'':`, goal ${goal} kg`}"><defs><linearGradient id="wg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--lime)" stop-opacity=".35"/><stop offset="1" stop-color="var(--lime)" stop-opacity="0"/></linearGradient></defs>${ticks}${months.join('')}<path d="${area}" fill="url(#wg)"/><path d="${line}" class="line"/>${goalLine}<circle cx="${f(X(last.x))}" cy="${f(Y(last.y))}" r="4.5" class="dot"/></svg>`;
 }
+// Each completed set as a dot, with a line through the heaviest set of each day.
+export function liftChart(days){
+ const W=340,H=170,L=34,R=14,T=10,B=24,DAY=864e5;
+ const t=d=>new Date(d+'T12:00').getTime(),first=t(days[0].date),last=t(days.at(-1).date);
+ const from=first===last?first-3*DAY:first,to=first===last?last+3*DAY:last;
+ const all=days.flatMap(d=>d.kgs),lo=Math.max(0,Math.floor((Math.min(...all)-1)/5)*5),hi=Math.ceil((Math.max(...all)+1)/5)*5;
+ const X=x=>L+(x-from)/(to-from)*(W-L-R),Y=y=>T+(hi-y)/(hi-lo)*(H-T-B);
+ const label=d=>{const x=new Date(t(d));return `${x.getDate()} ${MONTHS[x.getMonth()]}`;};
+ const ticks=[lo,(lo+hi)/2,hi].map(v=>`<text x="${L-6}" y="${f(Y(v)+4)}" text-anchor="end">${f(v)}</text><line x1="${L}" x2="${W-R}" y1="${f(Y(v))}" y2="${f(Y(v))}" class="grid"/>`).join('');
+ const dates=first===last?`<text x="${f(X(first))}" y="${H-6}" text-anchor="middle">${label(days[0].date)}</text>`:`<text x="${L}" y="${H-6}">${label(days[0].date)}</text><text x="${W-R}" y="${H-6}" text-anchor="end">${label(days.at(-1).date)}</text>`;
+ const dots=days.map(d=>d.kgs.map((kg,i)=>`<g><title>${label(d.date)} · set ${i+1}: ${kg} kg</title><circle cx="${f(X(t(d.date)))}" cy="${f(Y(kg))}" r="10" class="hit"/><circle cx="${f(X(t(d.date)))}" cy="${f(Y(kg))}" r="3.5" class="set"/></g>`).join('')).join('');
+ const best=days.map(d=>({x:X(t(d.date)),y:Y(Math.max(...d.kgs))}));
+ const line=best.map((p,i)=>`${i?'L':'M'}${f(p.x)},${f(p.y)}`).join(''),end=best.at(-1),top=Math.max(...all);
+ return `<svg viewBox="0 0 ${W} ${H}" class="chart lift-chart" role="img" aria-label="${all.length} sets over ${days.length} day${days.length===1?'':'s'}, best ${top} kg, heaviest set last time ${Math.max(...days.at(-1).kgs)} kg">${ticks}${dates}${days.length>1?`<path d="${line}" class="line"/>`:''}${dots}<circle cx="${f(end.x)}" cy="${f(end.y)}" r="4.5" class="dot"/></svg>`;
+}
 export function heatmapSvg(grid){
  const S=11,G=3,W=grid.length*(S+G)+12,top=14;
  const labels=grid.map((week,i)=>{const d=new Date(week[0].date+'T12:00');return d.getDate()<=7?`<text x="${i*(S+G)}" y="10">${MONTHS[d.getMonth()]}</text>`:'';}).join('');
