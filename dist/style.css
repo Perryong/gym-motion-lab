@@ -110,8 +110,9 @@ a.pill{text-decoration:none}
 .chart-empty{padding:24px 0;text-align:center}
 .lift-select{width:100%;background:var(--card-2);border:0;border-radius:12px;padding:11px 14px;color:var(--text);font-size:16px}
 .lift-summary{margin:12px 0 0}.lift-summary strong{font-size:20px;font-weight:600}
-.lift-chart .set{fill:#8a8f88;opacity:.75}.lift-chart .hit{fill:transparent}
-.lift-legend{display:flex;gap:16px;font-size:12px;color:var(--muted);margin-top:4px}.lift-legend span{display:flex;align-items:center;gap:6px}
+.lift-chart .set{fill:#8a8f88;opacity:.75}.lift-chart .hit{fill:transparent}.lift-chart{cursor:pointer}.lift-chart .set.picked{fill:var(--text);opacity:1;stroke:var(--card);stroke-width:2}
+.lift-foot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:4px 16px;margin-top:4px}.lift-readout{font-size:13px;color:var(--text)}
+.lift-legend{display:flex;gap:16px;font-size:12px;color:var(--muted)}.lift-legend span{display:flex;align-items:center;gap:6px}
 .lift-legend .swatch-line{width:14px;height:2.5px;background:var(--lime)}.lift-legend .swatch-dot{width:7px;height:7px;border-radius:50%;background:#8a8f88}
 .streak-card strong{display:block;font-size:24px}.streak-card .muted{font-size:14px}
 .tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
