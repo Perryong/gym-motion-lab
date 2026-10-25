@@ -53,3 +53,12 @@ export function workoutsByDate(history){
  for(const h of history){const key=localDate(when(h));if(!map.has(key))map.set(key,[]);map.get(key).push({...h,sets:h.entries.reduce((n,e)=>n+e.sets.filter(s=>s.done).length,0)});}
  return map;
 }
+// Per exercise: the kg of every completed weighted set, grouped by local day. Exercises trained most recently come first.
+export function liftSeries(history){
+ const byId=new Map();
+ for(const h of history){const date=localDate(when(h));for(const e of h.entries){
+  const kgs=e.sets.filter(s=>s.done&&s.kg>0).map(s=>s.kg);if(!kgs.length)continue;
+  if(!byId.has(e.id))byId.set(e.id,new Map());const days=byId.get(e.id);days.set(date,[...(days.get(date)??[]),...kgs]);
+ }}
+ return [...byId].map(([id,days])=>({id,days:[...days].sort(([a],[b])=>a<b?-1:1).map(([date,kgs])=>({date,kgs}))})).sort((a,b)=>b.days.at(-1).date.localeCompare(a.days.at(-1).date));
+}

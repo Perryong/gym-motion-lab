@@ -100,3 +100,17 @@ test('3D shoulder and arm exercises count toward Shoulders and Arms',()=>{
  const w={...at(9,8),entries:[{id:35,sets:[{kg:16,reps:8,done:true},{kg:16,reps:8,done:true}]},{id:40,sets:[{kg:25,reps:12,done:true}]}]};
  assert.deepEqual(muscleSets([w],NOW,7),{chest:0,back:0,shoulders:2,arms:1,legs:0,core:0});
 });
+
+test('lift series groups weighted done sets by exercise and day, most recent exercise first',async()=>{
+ const {liftSeries}=await import('../dist/stats.js');
+ const w=(m,d,entries)=>({...at(m,d),entries});
+ const series=liftSeries([
+  w(9,1,[{id:4,sets:[{kg:60,reps:8,done:true},{kg:62.5,reps:6,done:true},{kg:65,reps:5,done:false}]},{id:32,sets:[{kg:null,reps:6,done:true},{kg:0,reps:6,done:true}]}]),
+  w(9,1,[{id:4,sets:[{kg:57.5,reps:10,done:true}]}]), // second workout the same day joins that day
+  w(9,8,[{id:21,sets:[{kg:16,reps:10,done:true}]}]),
+  w(9,5,[{id:4,sets:[{kg:65,reps:5,done:true}]}]),
+ ]);
+ assert.deepEqual(series.map(s=>s.id),[21,4],'bodyweight-only exercises are left out');
+ assert.deepEqual(series[1].days,[{date:'2026-10-01',kgs:[60,62.5,57.5]},{date:'2026-10-05',kgs:[65]}],'days sorted by date even when history is not');
+ assert.deepEqual(liftSeries([]),[]);
+});

@@ -108,6 +108,11 @@ a.pill{text-decoration:none}
 .chart .goal{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 5}.chart .goal-label{fill:var(--gold);font-weight:700}
 .chart .dot{fill:var(--lime);stroke:var(--card);stroke-width:2}
 .chart-empty{padding:24px 0;text-align:center}
+.lift-select{width:100%;background:var(--card-2);border:0;border-radius:12px;padding:11px 14px;color:var(--text);font-size:16px}
+.lift-summary{margin:12px 0 0}.lift-summary strong{font-size:20px;font-weight:600}
+.lift-chart .set{fill:#8a8f88;opacity:.75}.lift-chart .hit{fill:transparent}
+.lift-legend{display:flex;gap:16px;font-size:12px;color:var(--muted);margin-top:4px}.lift-legend span{display:flex;align-items:center;gap:6px}
+.lift-legend .swatch-line{width:14px;height:2.5px;background:var(--lime)}.lift-legend .swatch-dot{width:7px;height:7px;border-radius:50%;background:#8a8f88}
 .streak-card strong{display:block;font-size:24px}.streak-card .muted{font-size:14px}
 .tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
 .tile{background:var(--card);border-radius:16px;padding:14px 18px}
